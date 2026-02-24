@@ -1,0 +1,20 @@
+*{
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Encode Sans Expanded', sans-serif;
+}
+
+html{
+  font-size: 60%;
+  background: #FAF9F6;
+}
+
+::-webkit-scrollbar {
+  width: 0;
+}
+
+.swal2-container.swal2-backdrop-show, .swal2-container.swal2-noanimation {
+
+z-index: 11000;
+}
