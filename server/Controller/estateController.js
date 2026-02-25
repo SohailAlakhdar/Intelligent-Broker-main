@@ -11,6 +11,7 @@ const fs = require('fs');
 const cloudinary = require('cloudinary').v2;
 const objectId = require('mongodb').ObjectID;
 const emailNotification = require("./notification");
+const { Types } = require("mongoose");
 
 
 function picAddOperation(files, estate) {
@@ -29,36 +30,47 @@ function picAddOperation(files, estate) {
   }
 }
 
-function picDeleteOperation(picPath) {
-  picPath.forEach((e) => {
-    try {
-      cloudinary.uploader.destroy(e.name);
-    } catch (err) {
-      console.error(err)
-      return (err);
-    }
-  })
+async function picDeleteOperation(picPath) {
+  try {
+    if (!picPath || !picPath.length) return;
+
+    const deletePromises = picPath.map(e => cloudinary.uploader.destroy(e.name));
+    await Promise.all(deletePromises);
+
+    console.log("All pictures deleted successfully");
+  } catch (err) {
+    console.error("Error deleting pictures:", err);
+    throw err;
+  }
 }
 
-exports.getAllEstates = function (req, res) {
-  partitionNumber = (parseInt(req.params.partition) * 60);
-  estate.estateModel.find({
-    status: 'approve'
-  }).skip(partitionNumber).limit(60)
-    .populate('category').populate("type")
-    .exec(function (error, doc) {
-      if (error) {
-        return res.status(400).send(JSON.stringify(error));
-      }
-      res.send(doc);
-    });
+exports.getAllEstates = async function (req, res) {
+  try {
+    const partition = parseInt(req.params.partition) || 0;
+    const skipCount = partition * 60;
 
-}
+    const estates = await estate.estateModel.find({ status: 'approve' })
+      .skip(skipCount)
+      .limit(60)
+      .populate('category')
+      .populate('type');
+    res.status(200).json(estates);
+  } catch (err) {
+    console.error("getAllEstates error:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
 
 exports.deleteEstate = function (req, res) {
   try {
+    if (!req.body._id) {
+      return res.status(400).json({ error: "Estate ID is required" });
+    }
     estate.estateModel.findByIdAndRemove({ _id: req.body._id }, req.body, function (error, doc) {
       if (error) { return res.status(400).send(JSON.stringify(error)); }
+      if (!doc) {
+        return res.status(404).json({ error: "Estate not found" });
+      }
       picDeleteOperation([doc.contract, ...doc.pic]);
       save.savedModel.deleteMany({ estateId: req.body._id }).exec();
       rate.rateModel.deleteMany({ estateId: req.body._id }).exec();
@@ -71,66 +83,144 @@ exports.deleteEstate = function (req, res) {
   }
 }
 
-exports.addEstate = function (req, res) {
-  if (req.file_error) {
-    return res.status(400).send(JSON.stringify(req.file_error));
-  }
-  var newEstate = new estate.estateModel(req.body);
-  newEstate.sellerId = req.user.id;
-  picAddOperation(req.files, newEstate);
-  newEstate.save(function (error, estate) {
-    if (error) {
-      // picDeleteOperation([newEstate.contract, ...newEstate.pic]);
-      return res.status(400).send(JSON.stringify(error));
-    }
-    res.status(200).send(JSON.stringify("Ok"));
-  });
-}
+exports.findEstate = function (req, res) {
+  estate.estateModel.findById({ _id: req.params.estateId })
+    .populate('category')
+    .populate('type')
+    .populate('sellerId', 'name email') // optional (good practice)
+    .exec(function (error, doc) {
+      if (error) {
+        return res.status(400).send(JSON.stringify(error));
+      }
 
-exports.updateEstate = function (req, res) {
-  if (req.file_error) {
-    return res.status(400).send(JSON.stringify(req.file_error));
+      if (!doc) {
+        return res.status(404).send(JSON.stringify("Estate not found"));
+      }
+
+      res.status(200).send(doc);
+    });
+};
+
+exports.addEstate = async function (req, res) {
+  try {
+    if (req.file_error) {
+      return res.status(400).json({ error: req.file_error });
+    }
+    const newEstate = new estate.estateModel(req.body);
+    newEstate.sellerId = req.user.id;
+    // Process uploaded pictures
+    await picAddOperation(req.files, newEstate);
+    await newEstate.save();
+    res.status(200).json({ message: "Estate added successfully" });
+  } catch (error) {
+    console.error("addEstate error:", error);
+    picDeleteOperation([newEstate.contract, ...newEstate.pic]);
+    res.status(400).json({ error: error.message });
   }
-  estate.estateModel.findById({
-    _id: req.body._id
-  }).then((data) => {
-    if (req.body.deletedPicNames || req.files.contract) {
-      req.body.deletedPicNames = req.body.deletedPicNames.split(",");
-      req.body.pic = [];
-      req.body.pic = data.pic.filter(e => {
-        if (!req.body.deletedPicNames.includes(e.path)) {
-          return e
-        }
-      })
+};
+
+// exports.updateEstate = function (req, res) {
+//   if (req.file_error) {
+//     return res.status(400).send(JSON.stringify(req.file_error));
+//   }
+//   estate.estateModel.findById({
+//     _id: req.body.estateId
+//   }).then((data) => {
+//     if (req.body.deletedPicNames || req.files.contract) {
+//       req.body.deletedPicNames = req.body.deletedPicNames.split(",");
+//       req.body.pic = [];
+//       req.body.pic = data.pic.filter(e => {
+//         if (!req.body.deletedPicNames.includes(e.path)) {
+//           return e
+//         }
+//       })
+//       picAddOperation(req.files, req.body);
+//       if (req.body.contract) {
+//         req.body.deletedPicNames.push(data.contract.path)
+//       } else if (!req.body.contract) {
+//         req.body.contract = data.contract;
+//       }
+//       req.body.deletedPicNames.forEach((e) => {
+//         if (e.length > 1) {
+//           try {
+//             fs.unlinkSync(e)
+//           } catch (err) {
+//             console.error(err)
+//           }
+//         }
+//       })
+//     }
+//     req.body.status ? null : req.body.status = "pending";
+//     estate.estateModel.updateOne({
+//       _id: req.body.estateId
+//     }, req.body,
+//       function (error) {
+//         if (error) {
+//           return res.status(400).send(JSON.stringify(error));
+//         }
+//         res.status(200).send(JSON.stringify("Ok"));
+//       });
+//   });
+// }
+
+exports.updateEstate = async function (req, res) {
+  try {
+
+    if (req.file_error) {
+      return res.status(400).json(req.file_error);
+    }
+    const data = await estate.estateModel.findById(req.body._id);
+
+    if (!data) {
+      return res.status(404).json({ message: "Estate not found" });
+    }
+
+    if (req.body.deletedPicNames || req.files?.contract) {
+
+      const deletedPics = req.body.deletedPicNames
+        ? req.body.deletedPicNames.split(",")
+        : [];
+
+      // Keep non-deleted pics
+      req.body.pic = data.pic.filter(e =>
+        !deletedPics.includes(e.path)
+      );
+
+      // Add new pics
       picAddOperation(req.files, req.body);
-      if (req.body.contract) {
-        req.body.deletedPicNames.push(data.contract.path)
-      } else if (!req.body.contract) {
+
+      // Contract handling
+      if (req.files?.contract) {
+        deletedPics.push(data.contract?.path);
+      } else {
         req.body.contract = data.contract;
       }
-      req.body.deletedPicNames.forEach((e) => {
-        if (e.length > 1) {
-          try {
-            fs.unlinkSync(e)
-          } catch (err) {
-            console.error(err)
-          }
-        }
-      })
-    }
-    req.body.status ? null : req.body.status = "pending";
-    estate.estateModel.updateOne({
-      _id: req.body._id
-    }, req.body,
-      function (error) {
-        if (error) {
-          return res.status(400).send(JSON.stringify(error));
-        }
-        res.status(200).send(JSON.stringify("Ok"));
-      });
-  });
 
-}
+      // Delete old files
+      deletedPics.forEach(path => {
+        if (path) {
+          picDeleteOperation(path, err => {
+            if (err) console.error(err);
+          });
+        }
+      });
+    }
+
+    if (!req.body.status) {
+      req.body.status = "pending";
+    }
+
+    await estate.estateModel.updateOne(
+      { _id: req.body._id },
+      req.body
+    );
+
+    res.status(200).json({ message: "Updated successfully" });
+
+  } catch (error) {
+    res.status(500).json(error);
+  }
+};
 
 exports.approveEstate = function (req, res) {
   estate.estateModel.findOneAndUpdate({ _id: req.body._id }, { status: req.body.status }, { new: true }).populate('sellerId', 'email')
@@ -141,7 +231,6 @@ exports.approveEstate = function (req, res) {
       console.log(err)
       res.status(400).send(JSON.stringify(err));
     });
-
 }
 
 exports.getCategoryAndType = async function (req, res) {
@@ -165,7 +254,6 @@ exports.getApproveEstateRequests = function (req, res) {
     }
     res.send(aproveReq);
   });
-
 }
 
 
@@ -181,13 +269,11 @@ exports.getMyEstates = function (req, res) {
 /*----------------------------Sprint 2----------------------------*/
 
 async function estateOverAllRate(estateId) {
-
   var scoreTotal = 0,
     responseTotal = 0,
     overallRating = 0;
   try {
-    let rates = await rate.rateModel.aggregate().match({ estateId: objectId(estateId) }).group({ _id: '$rate', count: { $sum: 1 } });
-
+    let rates = await rate.rateModel.aggregate().match({ estateId: Types.ObjectId(estateId) }).group({ _id: '$rate', count: { $sum: 1 } });
     rates.forEach(element => {
       scoreTotal += element.count * element._id;
       responseTotal += element.count;
@@ -223,286 +309,417 @@ exports.addAndUpdateRate = async function (req, res) {
   }
 }
 
-exports.getRates = function (req, res) {
-  rate.rateModel.find({
-    userId: req.user.id
-  }, { _id: 0, __v: 0, userId: 0 })
-    .then(result => {
-      res.send(result);
-    })
-    .catch(err => {
-      console.log(err);
-      res.send(JSON.stringify(err));
-    });
-}
+exports.getRates = async function (req, res) {
+  try {
+    const result = await rate.rateModel.find(
+      { userId: req.user.id },
+      { _id: 0, __v: 0, userId: 0 } // projection to exclude these fields
+    );
+    res.status(200).json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};
 
-exports.saveAndUnsave = function (req, res) {
-  const filter = {
-    userId: req.user.id,
-    estateId: req.body.estateId
-  };
-  save.savedModel.find(filter, function (err, results) {
-    if (err) {
-      console.log(err);
-    }
-    if (!results.length) {
-      const x = new save.savedModel(filter);
-      x.save()
-        .then(result => {
-          res.send(JSON.stringify("ok"));
-        })
-        .catch(err => {
-          console.log(err);
-          res.send(JSON.stringify(err))
-        });
+exports.saveAndUnsave = async function (req, res) {
+  try {
+    const filter = {
+      userId: req.user.id,
+      estateId: req.body.estateId
+    };
+    const existing = await save.savedModel.findOne(filter);
+    if (!existing) {
+      // Save the estate
+      const newSave = new save.savedModel(filter);
+      await newSave.save();
+      return res.status(200).json({ message: "Saved successfully" });
     } else {
-      save.savedModel.findOneAndDelete(filter)
-        .then(result => {
-          res.send(JSON.stringify("ok"));
-        })
-        .catch(err => {
-          console.log(err);
-          res.send(JSON.stringify(err))
-        });
+      // Unsave the estate
+      await save.savedModel.findOneAndDelete(filter);
+      return res.status(200).json({ message: "Unsaved successfully" });
     }
-  })
-}
-
-exports.getSavedEstates = function (req, res) {
-  save.savedModel.find({
-    userId: req.user.id
-  }, { _id: 0, __v: 0, userId: 0 }).populate('estateId').populate({
-    path: 'estateId',
-    populate: {
-      path: 'type category'
-    }
-  })
-    .then(result => {
-      res.send(result);
-    })
-    .catch(err => {
-      console.log(err);
-      res.send(JSON.stringify(err));
-    })
-}
-
-
-exports.search = function (req, res) {
-
-  let filter = req.body;
-  filter.status = "approve";
-
-  if (req.body.text) {
-    filter.$text = {
-      $search: `"\" ${req.body.text}"\"`
-    }
-    delete filter.text;
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: err.message });
   }
-  if (req.body.price) {
-    filter.price = { $gt: req.body.price[0] - 1, $lt: req.body.price[1] + 1 };
-  } if (req.body.size) {
-    filter.size = { $gt: req.body.size[0] - 1, $lt: req.body.size[1] + 1 };
+};
+
+exports.getSavedEstates = async function (req, res) {
+  try {
+    const savedEstates = await save.savedModel.find(
+      { userId: req.user.id },
+      { _id: 0, __v: 0, userId: 0 }
+    ).populate({
+      path: 'estateId',
+      populate: [
+        { path: 'type', select: 'name -_id' },
+        { path: 'category', select: 'name -_id' }
+      ]
+    });
+    res.status(200).json(savedEstates);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
   }
-  estate.estateModel.find(filter).populate('category').populate("type")
-    .then(result => {
-      res.send(result);
-    })
-    .catch(err => {
-      res.send(err);
-    })
-}
+};
+
+exports.search = async function (req, res) {
+  try {
+    let filter = { status: "approve", ...req.body };
+
+    // Text search
+    if (req.body.text) {
+      filter.$text = { $search: req.body.text };
+      delete filter.text;
+    }
+
+    // Price range filter
+    if (req.body.price && Array.isArray(req.body.price) && req.body.price.length === 2) {
+      filter.price = {
+        $gt: req.body.price[0] - 1,
+        $lt: req.body.price[1] + 1
+      };
+    }
+
+    // Size range filter
+    if (req.body.size && Array.isArray(req.body.size) && req.body.size.length === 2) {
+      filter.size = {
+        $gt: req.body.size[0] - 1,
+        $lt: req.body.size[1] + 1
+      };
+    }
+
+    const estates = await estate.estateModel.find(filter)
+      .populate({ path: 'category', select: 'name -_id' })
+      .populate({ path: 'type', select: 'name -_id' });
+
+    res.status(200).json(estates);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};
 
 /*---------------------------- Sprint 3 ----------------------*/
 
 
-exports.scheduleAndUpdateVisit = function (req, res) {
-  const filter = {
-    visitorId: req.user.id,
-    estateId: req.body.estateId
-  };
-  const update = {
-    date: req.body.date,
-    status: req.body.status ? req.body.status : "pending"
-  };
-  visit.visitModel.findOneAndUpdate(filter, update, {
-    upsert: true,
-    new: true,
-    setDefaultsOnInsert: true
-  })
-    .then(result => {
-      emailNotification.scheduleVisitNotifictaion(result._id);
-      res.send(JSON.stringify("ok"));
-    })
-    .catch(err => {
-      console.log(err);
-      res.send(JSON.stringify(err));
-    })
-}
+exports.scheduleAndUpdateVisit = async function (req, res) {
+  try {
+    const filter = {
+      visitorId: req.user.id,
+      estateId: req.body.estateId
+    };
 
-exports.approveScheduleVisit = function (req, res) {
-  visit.visitModel.findOneAndUpdate({ _id: req.body.visitId }, { status: req.body.status })
-    .then(result => {
-      emailNotification.scheduleVisitReplyNotifictaion(result._id);
-      res.send(JSON.stringify("ok"));
-    })
-    .catch(err => {
-      console.log(err);
-      res.send(JSON.stringify(err));
-    })
-}
+    const update = {
+      date: req.body.date,
+      status: req.body.status || "pending"
+    };
 
+    const visitDoc = await visit.visitModel.findOneAndUpdate(
+      filter,
+      update,
+      {
+        upsert: true,          // create new if not exist
+        new: true,             // return the updated document
+        setDefaultsOnInsert: true
+      }
+    );
 
-exports.getVisitsDates = function (req, res) {
-  req = JSON.parse(req.params.filter)
+    // Send email notification
+    emailNotification.scheduleVisitNotifictaion(visitDoc._id);
 
-  visit.visitModel.find(req).populate('estateId').populate('visitorId', "name email phoneNumber").then(result => {
-    if (req.sellerId) {
-      let data = {};
-      data.approve = []; data.reject = []; data.pending = [];
-      result.forEach((item) => {
-        if (item.estateId.sellerId == req.sellerId) {
-          if (item.status === 'approve') {
-            data.approve.push(item);
-          } else if (item.status === 'reject') {
-            data.reject.push(item);
-          } else if (item.status === 'pending') {
-            data.pending.push(item);
-          }
-        };
-      });
-      res.send(data);
-    } else {
-      res.send(result);
+    res.status(200).json({ message: "Visit scheduled/updated successfully", visit: visitDoc });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.approveScheduleVisit = async function (req, res) {
+  try {
+    const visitDoc = await visit.visitModel.findOneAndUpdate(
+      { _id: req.body.visitId },
+      { status: req.body.status },
+      { new: true } // return the updated document
+    );
+    if (!visitDoc) {
+      return res.status(404).json({ error: "Visit not found" });
     }
-  }).catch(err => {
-    console.log(err)
-    res.send(err);
-  })
-}
+    // Send email notification about approval/rejection
+    emailNotification.scheduleVisitReplyNotifictaion(visitDoc._id);
 
+    res.status(200).json({ message: "Visit status updated successfully", visit: visitDoc });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+exports.getVisitsDates = async function (req, res) {
+  try {
+    const estateId = req.params.estateId;
+
+    if (!estateId) {
+      return res.status(400).json({ message: "estateId is required" });
+    }
+    if (!Types.ObjectId.isValid(estateId)) {
+      return res.status(400).json({ message: "Invalid estateId format" });
+    }
+    const visits = await visit.visitModel
+      .find({ estateId })
+      .populate('estateId')
+      .populate('visitorId', 'name email phoneNumber');
+
+    return res.status(200).json(visits);
+
+  } catch (err) {
+    console.error("getVisitsDates error:", err);
+    return res.status(500).json({ error: err.message });
+  }
+};
 /*---------------------------- Sprint 4 ----------------------*/
 
 
-exports.approveAuction = async function (req, res) {
-  let estateData = await estate.estateModel.findById({ _id: req.body._id })
-  var auctionEndDate = new Date();
-  auctionEndDate.setDate(auctionEndDate.getDate() + (estateData.auctionData.duration * 7));
-  console.log(auctionEndDate)
-  const update = {
-    "auctionData.endDate": auctionEndDate,
-    status: req.body.status
-  };
-  estate.estateModel.updateOne({ _id: req.body._id }, update).then((data) => {
-    res.status(200).send(JSON.stringify("Ok"));
-  }).catch(err => {
-    console.log(err);
-    res.status(400).send(JSON.stringify(err));
-  })
-}
-
 exports.placeBid = async function (req, res) {
-  let auctionEndStatus = await auctionEnd(req.body.estateId);
-  if (auctionEndStatus.status || auctionEndStatus.auctionOwner === req.user.id) {
-    let response = await auctionResult(req.body.estateId);
-    res.status(400).send(JSON.stringify("Cant place bid to an ended auction"))
-  }
   try {
-    const newBid = new bid.bidModel(req.body);
-    newBid.userId = req.user.id;
-    newBid.save();
-    emailNotification.placeBidNotification(req.body.estateId)
-    estate.estateModel.updateOne({ _id: req.body.estateId }, { price: req.body.price }).exec();
-    res.status(200).send(JSON.stringify("Ok"));
+    // Check if auction ended or if user is auction owner
+    const auctionEndStatus = await auctionEnd(req.body.estateId);
+    if (auctionEndStatus.status || auctionEndStatus.auctionOwner === req.user.id) {
+      return res.status(400).json({ error: "Cannot place bid on an ended auction" });
+    }
+
+    // Create new bid
+    const newBid = new bid.bidModel({
+      estateId: req.body.estateId,
+      price: req.body.price,
+      userId: req.user.id
+    });
+
+    await newBid.save();
+    // Update estate price
+    await estate.estateModel.updateOne(
+      { _id: req.body.estateId },
+      { price: req.body.price }
+    );
+    // Send notification
+    emailNotification.placeBidNotification(req.body.estateId);
+
+    res.status(200).json({ message: "Bid placed successfully", bid: newBid });
+
   } catch (error) {
-    res.status(400).send(JSON.stringify(error));
+    console.error(error);
+    res.status(500).json({ error: error.message });
   }
-}
+};
+
+exports.approveAuction = async function (req, res) {
+  try {
+    const estateId = req.body.estateId;
+
+    const estateData = await estate.estateModel.findById(estateId);
+
+    if (!estateData) {
+      return res.status(404).json({ message: "Estate not found" });
+    }
+
+    if (!estateData.auctionData || !estateData.auctionData.duration) {
+      return res.status(400).json({ message: "Auction duration not set" });
+    }
+
+    // Calculate auction end date
+    const auctionEndDate = new Date();
+    auctionEndDate.setDate(
+      auctionEndDate.getDate() + (estateData.auctionData.duration * 7)
+    );
+
+    const update = {
+      "auctionData.endDate": auctionEndDate,
+      status: req.body.status
+    };
+
+    await estate.estateModel.updateOne({ _id: estateId }, update);
+
+    return res.status(200).json({
+      message: "Auction approved successfully",
+      endDate: auctionEndDate
+    });
+
+  } catch (err) {
+    console.error("approveAuction error:", err);
+    return res.status(500).json({ error: err.message });
+  }
+};
 
 async function auctionResult(estateId) {
   try {
-    let result = await bid.bidModel.find({ estateId: estateId }).sort('-price').limit(3).populate('userId');
-    return result;
+    // Get top 3 highest bids for this estate
+    const topBids = await bid.bidModel.find({ estateId: estateId })
+      .sort({ price: -1 })          // descending order
+      .limit(3)
+      .populate('userId', 'name email phoneNumber'); // only select relevant user fields
+
+    return topBids; // array of bids
   } catch (err) {
-    return err;
+    console.error("Error in auctionResult:", err);
+    return []; // return empty array if something goes wrong
   }
 }
 
 async function auctionEnd(estateId) {
   try {
-    var estateData = await estate.estateModel.findOne({ _id: estateId });
-    var nowDate = new Date();
-    var auctionDate = new Date(estateData.auctionData.endDate);
-    let diff = auctionDate.getTime() - nowDate.getTime();
-    let msInDays = 1000 * 3600 * 24;
-    let daysRemain = diff / msInDays
-    return { status: daysRemain <= 0, daysRemain: parseInt(daysRemain), auctionOwner: estateData.sellerId }
+    const estateData = await estate.estateModel.findById(estateId);
+    if (!estateData || !estateData.auctionData || !estateData.auctionData.endDate) {
+      return { status: true, daysRemain: 0, auctionOwner: null }; // consider auction ended if no data
+    }
+    const now = new Date();
+    const auctionEndDate = new Date(estateData.auctionData.endDate);
+    const diffMs = auctionEndDate.getTime() - now.getTime();
+    const daysRemain = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    return {
+      status: daysRemain < 0,           // true if auction ended
+      daysRemain: daysRemain >= 0 ? daysRemain : 0,
+      auctionOwner: estateData.sellerId
+    };
   } catch (err) {
-    console.log(err);
-    return err;
+    console.error("Error in auctionEnd:", err);
+    return { status: true, daysRemain: 0, auctionOwner: null }; // treat errors as auction ended
   }
 }
 
 exports.auctionOperations = async function (req, res) {
   try {
-    let auctionEndStatus = await auctionEnd(req.params.estateId);
-    if (auctionEndStatus.status) {
-      if (auctionEndStatus.auctionOwner == req.user.id) {
-        let response = await auctionResult(req.params.estateId)
-        res.send({ auctionResult: response });
-      } else {
-        res.send({ auctionResult: "Auction ended" });
-      }
-    } else {
-      res.status(200).send(JSON.stringify(auctionEndStatus.daysRemain));
-    }
-  } catch (err) {
-    res.status(400).send(JSON.stringify(err));
-  }
-}
+    const estateId = req.params.estateId;
 
+    const auctionEndStatus = await auctionEnd(estateId);
+
+    // If auction ended
+    if (auctionEndStatus.status) {
+
+      // If owner requests results
+      if (auctionEndStatus.auctionOwner.toString() === req.user.id) {
+
+        const result = await auctionResult(estateId);
+
+        return res.status(200).json({
+          ended: true,
+          results: result
+        });
+
+      } else {
+        return res.status(200).json({
+          ended: true,
+          message: "Auction ended"
+        });
+      }
+    }
+    // If auction still running
+    return res.status(200).json({
+      ended: false,
+      daysRemain: auctionEndStatus.daysRemain
+    });
+
+  } catch (err) {
+    console.error("auctionOperations error:", err);
+    return res.status(500).json({ error: err.message });
+  }
+};
 
 
 /*---------------------------- Sprint 5 ----------------------*/
 exports.estateReport = async function (req, res) {
-  var report = {
-    type: {
-      Sell: {},
-      Auction: {},
-      Rent: {}
-    },
-    category: {}
-  };
-
-  var category = [];
-  var type = [];
-
   try {
+    const report = {
+      type: {},
+      category: {}
+    };
 
-    const allEstates = await estate.estateModel.find({}).populate('category').populate("type").exec();
+    const allEstates = await estate.estateModel
+      .find({})
+      .populate("category")
+      .populate("type");
+
     allEstates.forEach(element => {
-      report.type[element.type.name][element.category.name] = report.type[element.type.name][element.category.name] + 1 || 1;
-      report.type[element.type.name]["value"] = report.type[element.type.name]["value"] + 1 || 1;
-      report.category[element.category.name] = report.category[element.category.name] + 1 || 1;
+      if (!element.type || !element.category) return;
+
+      const typeName = element.type.name;
+      const categoryName = element.category.name;
+
+      // Initialize type if not exists
+      if (!report.type[typeName]) {
+        report.type[typeName] = { name: typeName, value: 0 };
+      }
+
+      // Initialize category if not exists
+      if (!report.category[categoryName]) {
+        report.category[categoryName] = 0;
+      }
+
+      // Count type total
+      report.type[typeName].value += 1;
+
+      // Count type + category
+      report.type[typeName][categoryName] =
+        (report.type[typeName][categoryName] || 0) + 1;
+
+      // Count category total
+      report.category[categoryName] += 1;
     });
 
-    for (const [key, value] of Object.entries(report.category)) {
-      category.push({ name: key, value: value });
-    }
+    // Convert category object to array
+    const categoryArray = Object.entries(report.category).map(
+      ([name, value]) => ({ name, value })
+    );
 
-    for (const [key, value] of Object.entries(report.type)) {
-      value.name = key
-      type.push(value);
-    }
+    // Convert type object to array
+    const typeArray = Object.values(report.type);
 
-    report.category = category;
-    report.type = type;
-
-    res.send(report);
+    res.status(200).json({
+      type: typeArray,
+      category: categoryArray
+    });
 
   } catch (error) {
-
-    console.log(error);
-    res.status(400).send(JSON.stringify(error));
-
+    console.error("estateReport error:", error);
+    res.status(500).json({ error: error.message });
   }
-}
+};
+
+/*---------------------------- Sprint 6 ----------------------*/
+exports.predictEstatePrice = async function (req, res) {
+  try {
+    const { categoryId, typeId } = req.body;
+
+    if (!categoryId || !typeId) {
+      return res.status(400).json({
+        message: "categoryId and typeId are required"
+      });
+    }
+
+    // Find similar estates
+    const estates = await estate.estateModel.find({
+      category: categoryId,
+      type: typeId
+    });
+
+    if (estates.length === 0) {
+      return res.status(404).json({
+        message: "No similar estates found"
+      });
+    }
+
+    // Calculate average price
+    const totalPrice = estates.reduce((sum, e) => sum + e.price, 0);
+    const avgPrice = totalPrice / estates.length;
+
+    res.status(200).json({
+      predictedPrice: Math.round(avgPrice),
+      basedOn: estates.length
+    });
+
+  } catch (error) {
+    console.error("predictEstatePrice error:", error);
+    res.status(500).json({ error: error.message });
+  }
+};

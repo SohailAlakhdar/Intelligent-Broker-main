@@ -105,7 +105,6 @@ exports.checkAdmin = function (req, res) {
 
 }
 
-
 exports.getAllUsers = function (req, res) {
   user.userModel.find()
     .then(result => res.send(result))

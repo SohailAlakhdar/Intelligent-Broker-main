@@ -55,6 +55,7 @@ router.get("/getRates", auth, function (req, res) {
 router.post("/saveAndUnsave", auth, function (req, res) {
   estate.saveAndUnsave(req, res);
 })
+
 router.get("/getSavedEstates", auth, function (req, res) {
   estate.getSavedEstates(req, res);
 })
@@ -65,7 +66,7 @@ router.post("/search", function (req, res) {
 
 /*----------Sprint 3----------*/
 
-router.get("/getVisitsDates/:filter", auth, function (req, res) {
+router.get("/getVisitsDates/:estateId", auth, function (req, res) {
   estate.getVisitsDates(req, res);
 })
 
@@ -99,7 +100,8 @@ router.get("/estateReport", auth, adminCheck, function (req, res) {
 
 /*--------Sprint 6 ------------*/
 router.post("/predictEstatePrice", function (req, res) {
-  console.log(req.body);
+    estate.predictEstatePrice(req, res);
+
 })
 
 module.exports = router;

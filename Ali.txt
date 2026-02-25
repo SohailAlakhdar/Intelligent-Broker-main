@@ -1,0 +1,6 @@
+deleteEstate
+
+approveEstate
+
+getCategoryAndType
+

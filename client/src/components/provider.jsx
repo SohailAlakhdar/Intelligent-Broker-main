@@ -1,5 +1,5 @@
 import React from "react";
-import * as eserverFunctions from "../serverFunctions/estate";
+import * as serverFunctions from "../serverFunctions/estate";
 import { UserId } from "./checkData";
 
 export const MyContext = React.createContext();

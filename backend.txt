@@ -1,0 +1,134 @@
+// exports.placeBid = async function (req, res) {
+//   let auctionEndStatus = await auctionEnd(req.body.estateId);
+//   if (auctionEndStatus.status || auctionEndStatus.auctionOwner === req.user.id) {
+//     let response = await auctionResult(req.body.estateId);
+//     res.status(400).send(JSON.stringify("Cant place bid to an ended auction"))
+//   }
+//   try {
+//     const newBid = new bid.bidModel(req.body);
+//     newBid.userId = req.user.id;
+//     newBid.save();
+//     emailNotification.placeBidNotification(req.body.estateId)
+//     estate.estateModel.updateOne({ _id: req.body.estateId }, { price: req.body.price }).exec();
+//     res.status(200).send(JSON.stringify("Ok"));
+//   } catch (error) {
+//     res.status(400).send(JSON.stringify(error));
+//   }
+// }
+
+
+
+// async function auctionResult(estateId) {
+//   try {
+//     let result = await bid.bidModel.find({ estateId: estateId }).sort('-price').limit(3).populate('userId');
+//     return result;
+//   } catch (err) {
+//     return err;
+//   }
+// }
+
+
+// async function auctionEnd(estateId) {
+//   try {
+//     var estateData = await estate.estateModel.findOne({ _id: estateId });
+//     var nowDate = new Date();
+//     var auctionDate = new Date(estateData.auctionData.endDate);
+//     let diff = auctionDate.getTime() - nowDate.getTime();
+//     let msInDays = 1000 * 3600 * 24;
+//     let daysRemain = diff / msInDays
+//     return { status: daysRemain <= 0, daysRemain: parseInt(daysRemain), auctionOwner: estateData.sellerId }
+//   } catch (err) {
+//     console.log(err);
+//     return err;
+//   }
+// }
+
+async function auctionEnd(estateId) {
+  try {
+    const estateData = await estate.estateModel.findById(estateId);
+    if (!estateData || !estateData.auctionData || !estateData.auctionData.endDate) {
+      return { status: true, daysRemain: 0, auctionOwner: null }; // consider auction ended if no data
+    }
+    const now = new Date();
+    const auctionEndDate = new Date(estateData.auctionData.endDate);
+    const diffMs = auctionEndDate.getTime() - now.getTime();
+    const daysRemain = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    return {
+      status: daysRemain < 0,           // true if auction ended
+      daysRemain: daysRemain >= 0 ? daysRemain : 0,
+      auctionOwner: estateData.sellerId
+    };
+  } catch (err) {
+    console.error("Error in auctionEnd:", err);
+    return { status: true, daysRemain: 0, auctionOwner: null }; // treat errors as auction ended
+  }
+}
+
+
+exports.estateReport = async function (req, res) {
+  var report = {
+    type: {
+      Sell: {},
+      Auction: {},
+      Rent: {}
+    },
+    category: {}
+  };
+  var category = [];
+  var type = [];
+  try {
+    const allEstates = await estate.estateModel.find({}).populate('category').populate("type").exec();
+    allEstates.forEach(element => {
+      report.type[element.type.name][element.category.name] = report.type[element.type.name][element.category.name] + 1 || 1;
+      report.type[element.type.name]["value"] = report.type[element.type.name]["value"] + 1 || 1;
+      report.category[element.category.name] = report.category[element.category.name] + 1 || 1;
+    });
+    for (const [key, value] of Object.entries(report.category)) {
+      category.push({ name: key, value: value });
+    }
+    for (const [key, value] of Object.entries(report.type)) {
+      value.name = key
+      type.push(value);
+    }
+    report.category = category;
+    report.type = type;
+    res.send(report);
+  } catch (error) {
+    console.log(error);
+    res.status(400).send(JSON.stringify(error));
+  }
+}
+
+exports.addEstate = function (req, res) {
+  if (req.file_error) {
+    return res.status(400).send(JSON.stringify(req.file_error));
+  }
+  var newEstate = new estate.estateModel(req.body);
+  newEstate.sellerId = req.user.id;
+  picAddOperation(req.files, newEstate);
+  newEstate.save(function (error, estate) {
+    if (error) {
+      // picDeleteOperation([newEstate.contract, ...newEstate.pic]);
+      return res.status(400).send(JSON.stringify(error));
+    }
+    res.status(200).send(JSON.stringify("Ok"));
+  });
+}
+
+function picAddOperation(files, estate) {
+  if (files.contract) {
+    estate.contract = {};
+    estate.contract.path = files.contract[0].path;
+    estate.contract.name = files.contract[0].filename;
+  }
+  if (files.pic) {
+    files.pic.forEach((e) => {
+      estate.pic.push({
+        path: e.path,
+        name: e.filename
+      });
+    })
+  }
+}
+
+

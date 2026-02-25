@@ -14,7 +14,6 @@ async function main() {
         await mongoose.connect(process.env.DB_URI || "", {
             serverSelectionTimeoutMS: 30000,
         });
-        // UserModel.syncIndexes();
         console.log("Database connected 👌");
     } catch (error) {
         console.error("Database connection failed ❌", error);
@@ -22,12 +21,9 @@ async function main() {
     //   await mongoose.connect('mongodb+srv://wamb:wamb123@homeexplorerdb.ykmn0.mongodb.net/HomExplorer'); // Atlas DB Server
 }
 
-
-
 initDb();
 function initDb() {
     /*
-
     const apartment = new category.categoryModel({ name: 'Apartment' });
     const villa = new category.categoryModel({ name: 'Villa' });
 

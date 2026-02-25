@@ -30,7 +30,7 @@ import { StatusAlert, ValidationMsg } from "./appAlerts";
 import { DropDownLists, FormInputs } from "./formInputs";
 
 function EstateForm(props) {
-  const [estate, setEstate] = React.useState(props.data);
+  const [estate, setEstate] = React.useState(props.data || undefined);
   const [open, setOpen] = React.useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -99,7 +99,7 @@ function EstateForm(props) {
     }
     event.target.pic.files = fileValue();
     const formData = new FormData(event.target);
-    estate.addressOnMap.forEach((element) => {
+    estate?.addressOnMap?.forEach((element) => {
       formData.append("addressOnMap", element);
     });
     if (props.type === "Add") {
@@ -107,13 +107,15 @@ function EstateForm(props) {
       props.data.pic = [];
       setEstate(props.data);
     } else {
-      formData.append("_id", estate._id);
+      formData.append("_id", estate?._id);
       formData.append("deletedPicNames", deletedPicNames);
       updateSubmit(formData);
     }
   };
 
   function handleChange(event) {
+    console.log("ex, ", event);
+
     let name = event.target.name;
     let value = event.target.value;
     setEstate((prevEstate) => {
@@ -126,13 +128,17 @@ function EstateForm(props) {
 
   function handlefile(event) {
     let picfile = event.target.files;
-    estate.pic.push(...picfile);
-    handleChange({ target: { name: "pic", value: estate.pic } });
+    console.log(estate?.pic);
+
+    handleChange({
+      target: { name: "pic", value: [...estate?.pic || [], ...picfile] },
+    });
   }
 
   function fileValue() {
     let list = new DataTransfer();
-    estate.pic.forEach((e) => {
+
+    estate?.pic.forEach((e) => {
       if (!e.path) {
         let file = new File([e], e.name, { type: e.type });
         list.items.add(file);
@@ -142,7 +148,7 @@ function EstateForm(props) {
   }
 
   const handleDelete = (index, path) => {
-    let pic = estate.pic.filter((element, x) => {
+    let pic = estate?.pic.filter((element, x) => {
       return x !== index;
     });
     handleChange({ target: { name: "pic", value: pic } });
@@ -161,10 +167,10 @@ function EstateForm(props) {
         }
 
         function auctionData() {
-          if (typeof estate.type !== "object") {
+          if (typeof estate?.type !== "object") {
             if (
-              estate.type &&
-              context.categoryAndType.type.find((e) => e._id === estate.type)
+              estate?.type &&
+              context.categoryAndType.type.find((e) => e._id === estate?.type)
                 .name === "Auction"
             ) {
               EstateAuctionVali(validation, estate);
@@ -227,7 +233,7 @@ function EstateForm(props) {
                       handleChange={handleChange}
                       helperText={"Please select estate category"}
                       validation={validation.Category}
-                      value={estate.category || ""}
+                      value={estate?.category || ""}
                       options={context.categoryAndType.category}
                     />
                     <DropDownLists
@@ -235,7 +241,7 @@ function EstateForm(props) {
                       handleChange={handleChange}
                       helperText={"Please select estate type"}
                       validation={validation.Type}
-                      value={estate.type || ""}
+                      value={estate?.type || ""}
                       options={context.categoryAndType.type}
                     />
                     <FormInputs
@@ -247,7 +253,7 @@ function EstateForm(props) {
                         "Please enter size in meter square (&#13217;)"
                       }
                       handleChange={handleChange}
-                      value={estate.size || ""}
+                      value={estate?.size || ""}
                     />
                     <FormInputs
                       validation={validation.floor}
@@ -258,7 +264,7 @@ function EstateForm(props) {
                         "Please enter in which floor or number of floors if villa"
                       }
                       handleChange={handleChange}
-                      value={estate.floor || ""}
+                      value={estate?.floor || ""}
                     />
                     <FormInputs
                       validation={validation.Number_Of_Rooms}
@@ -267,7 +273,7 @@ function EstateForm(props) {
                       label={"Number of Rooms"}
                       helperText={""}
                       handleChange={handleChange}
-                      value={estate.numOfRooms || ""}
+                      value={estate?.numOfRooms || ""}
                     />
                     <FormInputs
                       validation={validation.Number_Of_BathRooms}
@@ -276,7 +282,7 @@ function EstateForm(props) {
                       label={"Number of Bathrooms"}
                       helperText={""}
                       handleChange={handleChange}
-                      value={estate.numOfBathRooms || ""}
+                      value={estate?.numOfBathRooms || ""}
                     />
 
                     <div>
@@ -298,7 +304,7 @@ function EstateForm(props) {
                         Upload Estate Images
                       </label>
                       <Stack sx={{ mt: 2 }} spacing={1}>
-                        {estate.pic.map((e, index) => {
+                        {estate?.pic?.map((e, index) => {
                           return (
                             <Chip
                               key={e.name}
@@ -336,10 +342,10 @@ function EstateForm(props) {
                         Upload Estate Contract
                       </label>
                       <Stack sx={{ mt: 2 }} spacing={1}>
-                        {(estate.contract || null) && (
+                        {(estate?.contract || null) && (
                           <Chip
-                            key={estate.contract.name}
-                            label={estate.contract.name}
+                            key={estate?.contract.name}
+                            label={estate?.contract.name}
                             variant="outlined"
                             onDelete={() => {
                               handleChange({
@@ -361,7 +367,7 @@ function EstateForm(props) {
                       }
                       handleChange={handleChange}
                       multiline={true}
-                      value={estate.desc || ""}
+                      value={estate?.desc || ""}
                     />
                     <FormInputs
                       validation={validation.Price}
@@ -370,7 +376,7 @@ function EstateForm(props) {
                       label={"Price"}
                       helperText={"Please enter price in dollar"}
                       handleChange={handleChange}
-                      value={estate.price || ""}
+                      value={estate?.price || ""}
                     />
 
                     <EstateFormSubmitBtn>
@@ -386,12 +392,12 @@ function EstateForm(props) {
                           "Please enter the estate address and mark it on map"
                         }
                         handleChange={handleChange}
-                        value={estate.address || ""}
+                        value={estate?.address || ""}
                       />
 
                       <MyMap
                         Change={handleChange}
-                        Location={estate.addressOnMap}
+                        Location={estate?.addressOnMap}
                       />
                     </EstateFormSubmitBtn>
 

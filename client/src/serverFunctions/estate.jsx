@@ -1,4 +1,5 @@
-import { Waiting } from "../components/waiting.jsx";
+// import { Waiting } from "../components/waiting.jsx";
+import * as Waiting from "../components/waiting.jsx";
 import { callServer, url } from "./callServer.jsx";
 
 export function getEstates(partition) {
@@ -144,7 +145,17 @@ export function searchData(data) {
 }
 
 /*----------------------Sprint 3----------------------*/
-
+// export function getVisits(id) {
+//   const requestOptions = {
+//     method: "get",
+//     headers: {
+//       "Content-Type": "application/json",
+//       "x-access-token": localStorage.getItem("HomExplorerToken"),
+//     },
+//     body: JSON.stringify({ estateId: id }),
+//   };
+//   return callServer(url + "getVisitsDates/filter", requestOptions, true);
+// }
 export function getVisits(id) {
   const requestOptions = {
     method: "get",
