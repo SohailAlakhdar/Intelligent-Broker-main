@@ -60,40 +60,43 @@ CLOUDINARY_API_SECRET=your_api_secret
 EMAIL_USER=your_email@gmail.com
 EMAIL_PASS=your_email_password
 ```
-Usage
-Access the API at http://localhost:3000
-Use a REST client like Postman to test the endpoints.
-Frontend (if available) can interact with these endpoints.
+## 🚀 Usage
 
-API Endpoints
-Users
-POST /auth/register – Register a new user
-POST /auth/login – Login user
+- Access the API at: `http://localhost:3000`  
+- Use a REST client like Postman to test the endpoints.  
+- Frontend (if available) can interact with these endpoints.  
 
-Estates
-GET /estates – Get all estates
-POST /estates – Add a new estate
-PUT /estates/:id – Update estate details
-DELETE /estates/:id – Delete an estate
+---
 
-Visits
-POST /visits – Schedule a visit
-PUT /visits/:id – Update visit
+## 📡 API Endpoints
 
-Bids
-POST /bids – Place a bid on an estate
-GET /bids/:estateId – Get all bids for an estate
+### Users
+- `POST /auth/register` – Register a new user  
+- `POST /auth/login` – Login user  
 
-Favorites
-POST /save – Save an estate to favorites
-GET /save – Get saved estates
+### Estates
+- `GET /estates` – Get all estates  
+- `POST /estates` – Add a new estate  
+- `PUT /estates/:id` – Update estate details  
+- `DELETE /estates/:id` – Delete an estate  
 
-Contributing
-Fork the repository.
-Create a feature branch: git checkout -b feature/YourFeature
-Commit your changes: git commit -m "Add some feature"
-Push to the branch: git push origin feature/YourFeature
-Open a pull request.
+### Visits
+- `POST /visits` – Schedule a visit  
+- `PUT /visits/:id` – Update a visit  
 
-License
-This project is licensed under the MIT License.
+### Bids
+- `POST /bids` – Place a bid on an estate  
+- `GET /bids/:estateId` – Get all bids for an estate  
+
+### Favorites
+- `POST /save` – Save an estate to favorites  
+- `GET /save` – Get saved estates  
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository.  
+2. Create a feature branch:  
+   ```bash
+   git checkout -b feature/YourFeature
