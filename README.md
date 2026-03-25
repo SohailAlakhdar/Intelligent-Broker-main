@@ -93,10 +93,3 @@ EMAIL_PASS=your_email_password
 - `GET /save` – Get saved estates  
 
 ---
-
-## 🤝 Contributing
-
-1. Fork the repository.  
-2. Create a feature branch:  
-   ```bash
-   git checkout -b feature/YourFeature
