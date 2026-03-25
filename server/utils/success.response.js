@@ -1,4 +1,3 @@
-
 export const successResponse = ({
     res,
     statusCode = 200,

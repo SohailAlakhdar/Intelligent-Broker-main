@@ -48,34 +48,49 @@ function createToken(user, res) {
 
   const payload = {
     id: user._id,
-    userName: user.name
-  }
+    userName: user.userName,
+    email: user.email
+  };
 
-  jwt.sign(payload,
+  const token = jwt.sign(
+    payload,
     process.env.ACCESS_USER_TOKEN_SIGNATURE,
-    // process.env.jwtPrivateKey,
-    (err, token) => {
-      if (err) return res.json({ message: err })
-      return res.json({
-        message: "Success",
-        userId: user._id,
-        token: "Bearer " + token
-      })
+    {
+      expiresIn: "7d"
     }
-  )
+  );
+
+  return res.status(200).json({
+    message: "Success",
+    userId: user._id,
+    token: "Bearer " + token
+  });
+
 }
 
 exports.verifyJWT = function (req, res, next) {
-  const token = req.headers["x-access-token"]?.split(' ')[1];
+  const authHeader = req.headers["x-access-token"];
+
+  if (!authHeader) {
+    return res.status(401).json({
+      isLoggedIn: false,
+      message: "No token provided"
+    });
+  }
+
+  const token = authHeader.split(' ')[1];
   if (token) {
     jwt.verify(token, process.env.ACCESS_USER_TOKEN_SIGNATURE, (err, decoded) => {
       if (err) return res.json({
         isLoggedIn: false,
         message: "Failed To Authenticate"
       })
-      req.user = {};
-      req.user.id = decoded.id;
-      req.user.userName = decoded.userName;
+      // req.user = {
+      //   id: decoded.id,
+      //   userName: decoded.userName,
+      //   email: decoded.email
+      // };
+      req.user = decoded;
       next()
     })
   } else {

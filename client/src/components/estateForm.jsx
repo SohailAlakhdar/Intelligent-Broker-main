@@ -102,7 +102,7 @@ function EstateForm(props) {
     estate?.addressOnMap?.forEach((element) => {
       formData.append("addressOnMap", element);
     });
-    if (props.type === "Add") {
+    if (props.type == "Add") {
       addSubmit(formData);
       props.data.pic = [];
       setEstate(props.data);

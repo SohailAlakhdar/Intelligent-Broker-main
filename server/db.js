@@ -23,39 +23,36 @@ async function main() {
 
 initDb();
 function initDb() {
-    /*
-    const apartment = new category.categoryModel({ name: 'Apartment' });
-    const villa = new category.categoryModel({ name: 'Villa' });
+    // const apartment = new category.categoryModel({ name: 'Apartment' });
+    // const villa = new category.categoryModel({ name: 'Villa' });
 
-    category.categoryModel.insertMany([apartment,villa]).then(function(){
-        console.log("category inserted")  // Success
-    }).catch(function(error){
-        console.log(error)      // Failure
-    });
+    // category.categoryModel.insertMany([apartment, villa]).then(function () {
+    //     console.log("category inserted")  // Success
+    // }).catch(function (error) {
+    //     console.log(error)      // Failure
+    // });
 
-    const auction = new type.estateTypeModel({ name: 'Auction' });
-    const sell = new type.estateTypeModel({ name: 'Sell' });
-    const rent = new type.estateTypeModel({ name: 'Rent' });
+    // const auction = new type.estateTypeModel({ name: 'Auction' });
+    // const sell = new type.estateTypeModel({ name: 'Sell' });
+    // const rent = new type.estateTypeModel({ name: 'Rent' });
 
-    type.estateTypeModel.insertMany([auction , sell , rent ]).then(function(){
-        console.log("type inserted")  // Success
-    }).catch(function(error){
-        console.log(error)      // Failure
-    });
+    // type.estateTypeModel.insertMany([auction, sell, rent]).then(function () {
+    //     console.log("type inserted")  // Success
+    // }).catch(function (error) {
+    //     console.log(error)      // Failure
+    // });
+    // const newUser = new user.userModel({
+    //     name: "AdminUser",
+    //     password: "Admin@user123",
+    //     email: "Admin@user.com",
+    //     phoneNumber: "00121414252",
+    //     admin: "false"
+    // });
 
-    const newUser = new user.userModel({
-      name: "AdminUser",
-      password: "Admin@user123",
-      email: "Admin@user.com",
-      phoneNumber: "00121414252",
-      admin:"false"
-    });
-
-    newUser.save(function(err) {
-           if (err) {
-               console.log(err);
-             }
-           console.log("user inserted")
-       });
-    */
+    // newUser.save(function (err) {
+    //     if (err) {
+    //         console.log(err);
+    //     }
+    //     console.log("user inserted")
+    // });
 }

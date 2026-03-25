@@ -23,6 +23,10 @@ router.post("/addEstate", auth, upFi, function (req, res) {
   estate.addEstate(req, res);
 })
 
+router.put("/updateEstateImage", auth, upFi, function (req, res) {
+  estate.updateEstateImage(req, res);
+})
+
 router.put("/updateEstate", auth, upFi, function (req, res) {
   estate.updateEstate(req, res);
 })
@@ -100,7 +104,7 @@ router.get("/estateReport", auth, adminCheck, function (req, res) {
 
 /*--------Sprint 6 ------------*/
 router.post("/predictEstatePrice", function (req, res) {
-    estate.predictEstatePrice(req, res);
+  estate.predictEstatePrice(req, res);
 
 })
 

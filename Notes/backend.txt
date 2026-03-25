@@ -132,3 +132,56 @@ function picAddOperation(files, estate) {
 }
 
 
+{
+  try {
+    if (req.file_error) {
+      return res.status(400).json(req.file_error);
+    }
+    const data = await estate.estateModel.findById(req.body.estateId);
+
+    if (!data) {
+      return res.status(404).json({ message: "Estate not found" });
+    }
+    if (req.body.deletedPicNames || req.files?.contract) {
+
+      const deletedPics = req.body.deletedPicNames
+        ? req.body.deletedPicNames.split(",")
+        : [];
+
+      // Keep non-deleted pics
+      req.body.pic = data.pic.filter(e =>
+        !deletedPics.includes(e.path)
+      );
+      // Add new pics
+      picAddOperation(req.files, req.body);
+      // Contract handling
+      if (req.files?.contract) {
+        deletedPics.push(data.contract?.path);
+      } else {
+        req.body.contract = data.contract;
+      }
+
+      // Delete old files
+      deletedPics.forEach(path => {
+        if (path) {
+          picDeleteOperation(path, err => {
+            if (err) console.error(err);
+          });
+        }
+      });
+    }
+    if (!req.body.status) {
+      req.body.status = "pending";
+    }
+
+    await estate.estateModel.updateOne(
+      { _id: req.body._id },
+      req.body
+    );
+
+    return res.status(200).json({ message: "Done" });
+
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+};
