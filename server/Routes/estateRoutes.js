@@ -5,6 +5,11 @@ const auth = require("../Controller/userController").verifyJWT;
 const adminCheck = require("../Controller/userController").serverAdminCheck;
 const router = express.Router();
 
+router.post("/insertManyEstates", function (req, res) {
+
+  estate.insertManyEstates(req, res);
+})
+
 router.get("/getEstates/:partition", function (req, res) {
   estate.getAllEstates(req, res);
 })
@@ -105,7 +110,7 @@ router.get("/estateReport", auth, adminCheck, function (req, res) {
 /*--------Sprint 6 ------------*/
 router.post("/predictEstatePrice", function (req, res) {
   estate.predictEstatePrice(req, res);
-
 })
+
 
 module.exports = router;

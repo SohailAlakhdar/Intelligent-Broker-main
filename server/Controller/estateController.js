@@ -733,3 +733,32 @@ exports.predictEstatePrice = async function (req, res) {
     res.status(500).json({ error: error.message });
   }
 };
+
+// ----------------------------------------------------------
+
+exports.insertManyEstates = async (req, res) => {
+  try {
+    console.log("Start inserting...");
+
+    const estates = req.body;
+
+    // 🔥 important: make sure it's an array
+    if (!Array.isArray(estates)) {
+      return res.status(400).json({ message: "Body must be an array" });
+    }
+
+    const result = await estate.estateModel.insertMany(estates);
+
+    console.log("Inserted:", result.length);
+
+    res.status(201).json({
+      message: "Inserted successfully",
+      count: result.length,
+      data: result
+    });
+
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({ error: err.message });
+  }
+};

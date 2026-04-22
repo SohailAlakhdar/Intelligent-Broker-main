@@ -1,0 +1,10 @@
+py -3.11 -m venv .venv
+pymongo
+scikit-learn==1.2.2
+numpy==1.26.4
+ pip install scikit-learn==1.2.2 numpy pandas scipy joblib
+
+pip install wheel
+pip install numpy
+pip install scikit-surprise
+surprise =scikit-surprise

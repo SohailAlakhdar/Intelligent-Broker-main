@@ -3,3 +3,14 @@ node_modules/
 config
 .env.dev
 .env.prod
+
+.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
+Thumbs.db

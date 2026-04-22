@@ -2,5 +2,5 @@
 
 
 git add .
-git commit -m "last end final commit"
+git commit -m "backend is ended"
 git push -u origin main

@@ -21,8 +21,51 @@ async function main() {
     //   await mongoose.connect('mongodb+srv://wamb:wamb123@homeexplorerdb.ykmn0.mongodb.net/HomExplorer'); // Atlas DB Server
 }
 
+
+
 initDb();
 function initDb() {
+    // const estate = require('./Model/estateModel');
+
+    // const newEstate = new estate.estateModel({
+    //     sellerId: "69c3660f6c2eaa73b0ea8545",
+    //     address: "Apartment 12, Fifth Settlement, New Cairo",
+    //     price: 3200000,
+    //     numOfRooms: 3,
+    //     numOfBathRooms: 2,
+    //     floor: 4,
+    //     size: 180,
+    //     desc: "Modern apartment in a quiet residential compound",
+    //     status: "approve",
+    //     rate: 4.5,
+    //     type: "69a0640cd2c41a0bce34c3c2",
+    //     category: "69a0640cd2c41a0bce34c3c0",
+    //     addressOnMap: [30.0131, 31.4913],
+    //     auctionData: {
+    //         duration: 5,
+    //         endDate: new Date("2028-06-01")
+    //     },
+    //     pic: [
+    //         {
+    //             path: "https://res.cloudinary.com/sample.jpg",
+    //             name: "homeExplorerImages/sample"
+    //         }
+    //     ],
+    //     contract: {
+    //         path: "https://res.cloudinary.com/contract.jpg",
+    //         name: "homeExplorerImages/contract"
+    //     }
+    // });
+
+    // newEstate.save(function (err) {
+    //     if (err) {
+    //         console.log(err);
+    //     }
+    //     console.log("estate inserted");
+    // });
+
+
+    // -------------
     // const apartment = new category.categoryModel({ name: 'Apartment' });
     // const villa = new category.categoryModel({ name: 'Villa' });
 

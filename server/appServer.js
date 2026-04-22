@@ -20,6 +20,7 @@ app.use("/ai", require(path.join(__dirname + "/Routes/aiRoutes")));
 app.use("/*dummy", (req, res) => {
   res.status(404).json({ message: "Not Found this URL" });
 });
+
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
   api_key: process.env.API_KEY,
