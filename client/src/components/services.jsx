@@ -51,8 +51,10 @@ function Services(props) {
         });
       }
     };
+
     fetchData();
   }, [partition, props.Data]);
+
   const getPartion = () => {
     setPartition((pre) => {
       return pre + 1;

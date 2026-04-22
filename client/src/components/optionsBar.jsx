@@ -46,7 +46,7 @@ function OptionsBar(props) {
           <div>
             <List>
               <ListItem button>
-                <EstateForm />
+                <EstateForm type={"Add"} />
               </ListItem>
 
               <ListItem onClick={toggleDrawer(false)} button>
