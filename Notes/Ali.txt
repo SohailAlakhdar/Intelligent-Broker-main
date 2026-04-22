@@ -3,7 +3,6 @@
 2- why we should search in bids to appeare
 3- placeBid => how can work these api?
 4- myEstates > why i can see myEstate's status is pending
-5- 
 
 
 deleteEstate
