@@ -107,7 +107,7 @@ function EstateForm(props) {
       props.data.pic = [];
       setEstate(props.data);
     } else {
-      formData.append("_id", estate?._id);
+      formData.append("estateId", estate?._id);
       formData.append("deletedPicNames", deletedPicNames);
       updateSubmit(formData);
     }
@@ -131,7 +131,7 @@ function EstateForm(props) {
     console.log(estate?.pic);
 
     handleChange({
-      target: { name: "pic", value: [...estate?.pic || [], ...picfile] },
+      target: { name: "pic", value: [...(estate?.pic || []), ...picfile] },
     });
   }
 

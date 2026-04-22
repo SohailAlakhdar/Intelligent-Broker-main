@@ -29,9 +29,13 @@ function Products(props) {
       setData(res);
     };
 
+    console.log(location.state);
+
     if (location.state === "Auction") {
       fetchAuctionData();
     } else if (location.state === "Recommendation") {
+      fetchRecommendationData();
+    } else {
       fetchRecommendationData();
     }
   }, [location.state, navigate]);
@@ -61,6 +65,7 @@ function Products(props) {
 
     let res = await serverFunctions.searchData(data);
     setData(res);
+    console.log(res);
   };
 
   function checkDataFrom() {
@@ -69,6 +74,7 @@ function Products(props) {
         return <Loading mood={"loading"} />;
       }
     }
+
     return <Services ID="services" from=" Services" Data={data} />;
   }
   return (
