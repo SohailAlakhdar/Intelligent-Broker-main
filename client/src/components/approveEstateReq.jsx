@@ -271,7 +271,7 @@ function ApproveEstateReq(props) {
                                   onClick={() => {
                                     handelDecisionBtn(
                                       e._id,
-                                      "approve",
+                                      "approved",
                                       e.type.name === "Auction" && true,
                                     );
                                   }}

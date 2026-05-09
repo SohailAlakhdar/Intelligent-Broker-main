@@ -25,7 +25,7 @@
 # db = client["HomExplorer"]
 # Estate_collection = db["estates"]
 # UserID = sys.argv[1]
-# estate_results = Estate_collection.find({'status':"approve"})
+# estate_results = Estate_collection.find({'status':"approved"})
 
 
 # with open (cwd+"/Data/estateRecommendationModel",'rb') as f:
@@ -64,7 +64,7 @@ db = client["HomExplorer"]
 estate_collection = db["estates"]
 
 # Get approved estates
-estates = [str(e["_id"]) for e in estate_collection.find({"status": "approve"})]
+estates = [str(e["_id"]) for e in estate_collection.find({"status": "approved"})]
 
 # Load trained recommendation model
 with open(model_path, 'rb') as f:

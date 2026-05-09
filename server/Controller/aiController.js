@@ -44,7 +44,7 @@ function preprocess_request(req) {
 
 async function getRecommendedEstate(ids) {
   const estates = await estate.estateModel.find({
-    status: 'approve',
+    status: 'approved',
     _id: { $in: ids }
   }).populate('category').populate("type").exec()
 

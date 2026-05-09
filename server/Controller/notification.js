@@ -124,7 +124,7 @@ exports.estateNotification = async function (estateData) {
     let subject = "Update on Intelligent Broker estate status";
     let body = "Your request for " + estateData.address + " estate was Updated check it ";
     emailNotification(estateData.sellerId.email, subject, body)
-    if (estateData.status === "approve") {
+    if (estateData.status === "approved") {
       body = "New updates on " + estateData.estateId.address + " estate check it";
       let savedEstatesData = await save.savedModel.find({ estateId: estateData._id }).populate('visitorId', 'email');
       savedEstatesData.forEach(element => {

@@ -13,7 +13,11 @@ const estateSchema = new Schema({
   floor: { type: Number, min: 0, max: 163, required: true },
   size: { type: Number, min: 20, max: 10000, required: true },
   desc: { type: String, minLength: 30, required: true },
-  status: { type: String, default: 'pending' },
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending',
+  },
   rate: { type: Number, default: 0, min: 0, max: 5 },
   type: { type: Schema.Types.ObjectId, ref: 'estateType', required: true },
   category: { type: Schema.Types.ObjectId, ref: 'category', required: true },

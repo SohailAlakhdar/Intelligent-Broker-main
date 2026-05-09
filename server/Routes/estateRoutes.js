@@ -1,6 +1,8 @@
 const express = require("express");
 const uploadpPic = require("../Controller/uploadPic");
 const estate = require("../Controller/estateController");
+const { validation } = require("../middlewares/validation.middleware.js");
+const { updateEstateSchema } = require("../middlewares/estate.validation.js");
 const auth = require("../Controller/userController").verifyJWT;
 const adminCheck = require("../Controller/userController").serverAdminCheck;
 const router = express.Router();
@@ -36,7 +38,7 @@ router.put("/updateEstate", auth, upFi, function (req, res) {
   estate.updateEstate(req, res);
 })
 
-router.post("/approveEstate", auth, adminCheck, function (req, res) {
+router.post("/approveEstate", auth, adminCheck, validation(updateEstateSchema), function (req, res) {
   estate.approveEstate(req, res);
 })
 

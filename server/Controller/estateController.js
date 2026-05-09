@@ -46,11 +46,22 @@ async function picDeleteOperation(picsToDelete) {
 
 exports.getAllEstates = async function (req, res) {
   try {
-    const partition = parseInt(req.params.partition) || 0;
-    const skipCount = partition * 60;
+    // validation
+    const partition = Number(req.params.partition);
 
+    if (
+      isNaN(partition) ||
+      !Number.isInteger(partition) ||
+      partition < 0
+    ) {
+      return res.status(400).json({
+        message: "partition must be a positive integer or 0"
+      });
+    }
+
+    const skipCount = partition * 60;
     const estates = await estate.estateModel
-      .find({ status: "approve" })
+      .find({ status: "approved" })
       .skip(skipCount)
       .limit(60)
       .populate("category")
@@ -86,6 +97,7 @@ exports.deleteEstate = async function (req, res) {
     return res.status(400).json({ error: err.message });
   }
 };
+
 exports.findEstate = function (req, res) {
   estate.estateModel
     .findById({ _id: req.params.estateId })
@@ -132,7 +144,11 @@ exports.updateEstateImage = async function (req, res) {
     if (req.file_error) {
       return res.status(400).json(req.file_error);
     }
-    console.log("UpdateImage");
+
+    if (!req.body.estateId) {
+      return res.status(400).json({ message: "estateId is required" });
+    }
+
 
     const estateDoc = await estate.estateModel
       .findById(req.body.estateId)
@@ -142,13 +158,15 @@ exports.updateEstateImage = async function (req, res) {
       return res.status(404).json({ message: "Estate not found" });
     }
     let deletedPics = [];
-    // PICTURES HANDLING
+    // ---------------- PICTURES HANDLING ----------------
     console.log("PICTURES");
-    if (req.body.deletedPicNames) {
+
+    if (req.body.deletedPicNames && req.body.deletedPicNames.trim() !== "") {
       deletedPics = req.body.deletedPicNames.split(",");
-      estateDoc.pic = estateDoc.pic.filter(
-        (pic) => !deletedPics.includes(pic.name),
-      );
+
+      estateDoc.pic = estateDoc.pic.filter(function (pic) {
+        return deletedPics.indexOf(pic.name) === -1;
+      });
     }
     // CONTRACT HANDLING ----------------------
     console.log("CONTRACT");
@@ -191,23 +209,58 @@ exports.updateEstate = async function (req, res) {
     res.status(500).json(error);
   }
 };
+// done
+exports.approveEstate = async function (req, res) {
+  try {
+    // validation
+    if (!req.body._id || !req.body.status) {
+      return res.status(400).json({
+        message: "_id and status are required",
+      });
+    }
 
-exports.approveEstate = function (req, res) {
-  estate.estateModel
-    .findOneAndUpdate(
-      { _id: req.body._id },
-      { status: req.body.status },
-      { new: true },
-    )
-    .populate("sellerId", "email")
-    .then((data) => {
-      emailNotification.estateNotification(data);
-      res.status(200).send(JSON.stringify("Ok"));
-    })
-    .catch((err) => {
-      console.log(err);
-      res.status(400).send(JSON.stringify(err));
+    // find estate first
+    const existingEstate = await estate.estateModel.findById(req.body._id);
+
+    // check if estate exists
+    if (!existingEstate) {
+      return res.status(404).json({
+        message: "Estate not found",
+      });
+    }
+
+    // check if already approved
+    if (existingEstate.status === "approved") {
+      return res.status(400).json({
+        message: "Estate is already approved",
+      });
+    }
+
+    // update estate
+    const updatedEstate = await estate.estateModel
+      .findOneAndUpdate(
+        { _id: req.body._id },
+        { status: req.body.status },
+        { new: true }
+      )
+      .populate("sellerId", "email");
+
+    // send email notification
+    // await emailNotification.estateNotification(updatedEstate);
+
+    res.status(200).json({
+      message: "Estate updated successfully",
+      data: updatedEstate,
     });
+
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: "Error updating estate",
+      error: err.message,
+    });
+  }
 };
 
 exports.getCategoryAndType = async function (req, res) {
@@ -357,7 +410,7 @@ exports.getSavedEstates = async function (req, res) {
 
 exports.search = async function (req, res) {
   try {
-    let filter = { status: "approve", ...req.body };
+    let filter = { status: "approved", ...req.body };
 
     // Text search
     if (req.body.text) {
@@ -435,7 +488,7 @@ exports.scheduleAndUpdateVisit = async function (req, res) {
 
 exports.approveScheduleVisit = async function (req, res) {
   try {
-    const allowedStatus = ["approve", "rejecte"];
+    const allowedStatus = ["approved", "rejected"];
 
     if (!allowedStatus.includes(req.body.status)) {
       return res.status(400).json({
@@ -482,7 +535,6 @@ exports.approveScheduleVisit = async function (req, res) {
 exports.getVisitsDates = async function (req, res) {
   try {
     const estateId = req.params.estateId;
-
     if (!estateId) {
       return res.status(400).json({ message: "estateId is required" });
     }

@@ -1,10 +1,13 @@
-export const successResponse = ({
+exports.successResponse = function ({
     res,
     statusCode = 200,
     message = "Done",
-    data,
-}) => {
-    return res
-        .status(statusCode)
-        .json({ message: message, statusCode, data: data });
+    data = null,
+}) {
+    return res.status(statusCode).json({
+        success: true,
+        message: message,
+        statusCode: statusCode,
+        data: data,
+    });
 };

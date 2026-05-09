@@ -8,8 +8,8 @@ const Provider = (props) => {
   const [estateRequests, setEstateRequests] = React.useState("Loading");
   const [categoryAndType, setCategoryAndType] = React.useState("Loading");
   const [visitRequests, setVisitRequests] = React.useState({
-    approve: "Loading",
-    reject: "Loading",
+    approved: "Loading",
+    rejected: "Loading",
     pending: "Loading",
     myVisit: "Loading",
   });
@@ -32,8 +32,8 @@ const Provider = (props) => {
       setEstateRequests(estateReq);
       setSaveList(save);
       setVisitRequests({
-        approve: visitReq.approve,
-        reject: visitReq.reject,
+        approved: visitReq.approved,
+        rejected: visitReq.rejected,
         pending: visitReq.pending,
         myVisit: myVisitsReq,
       });

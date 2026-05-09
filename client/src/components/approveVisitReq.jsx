@@ -105,9 +105,9 @@ function ApproveEstateReq(props) {
         }}
         options={[
           { value: "myVisit", title: "myVisit" },
-          { value: "approve", title: "Approved Visits" },
+          { value: "approved", title: "Approved Visits" },
           { value: "pending", title: "Pending Visits" },
-          { value: "reject", title: "Rejected Visits" },
+          { value: "rejected", title: "Rejected Visits" },
         ]}
       />
 
@@ -173,7 +173,7 @@ function ApproveEstateReq(props) {
                           <Button
                             color="success"
                             onClick={() => {
-                              handelDecisionBtn(e, "approve");
+                              handelDecisionBtn(e, "approved");
                             }}
                             variant="outlined"
                             startIcon={<CheckCircleIcon />}

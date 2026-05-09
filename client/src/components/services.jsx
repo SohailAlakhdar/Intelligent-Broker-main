@@ -150,9 +150,9 @@ function Services(props) {
                 value={statusFilter}
                 onChange={handleStatusFilterChange}
                 options={[
-                  { value: "approve", title: "My Approved Estates" },
+                  { value: "approved", title: "My Approved Estates" },
                   { value: "pending", title: "My Pending Estates" },
-                  { value: "reject", title: "My Rejected Estates" },
+                  { value: "rejected", title: "My Rejected Estates" },
                 ]}
               />
             )}

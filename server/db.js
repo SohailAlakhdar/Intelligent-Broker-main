@@ -21,36 +21,38 @@ async function main() {
   //   await mongoose.connect('mongodb+srv://wamb:wamb123@homeexplorerdb.ykmn0.mongodb.net/HomExplorer'); // Atlas DB Server
 }
 
+initDb()
+async function initDb() {
+  const categoryCount = await category.categoryModel.countDocuments();
+  const typeCount = await type.estateTypeModel.countDocuments();
+  const userCount = await user.userModel.countDocuments();
 
+  if (categoryCount === 0) {
+    await category.categoryModel.insertMany([
+      { name: 'Apartment' },
+      { name: 'Villa' }
+    ]);
+    console.log("categories inserted");
+  }
 
-initDb();
-function initDb() {
-  // const apartment = new category.categoryModel({ name: 'Apartment' });
-  // const villa = new category.categoryModel({ name: 'Villa' });
-  // category.categoryModel.insertMany([apartment, villa]).then(function () {
-  //     console.log("category inserted")  // Success
-  // }).catch(function (error) {
-  //     console.log(error)      // Failure
-  // });
-  // const auction = new type.estateTypeModel({ name: 'Auction' });
-  // const sell = new type.estateTypeModel({ name: 'Sell' });
-  // const rent = new type.estateTypeModel({ name: 'Rent' });
-  // type.estateTypeModel.insertMany([auction, sell, rent]).then(function () {
-  //     console.log("type inserted")  // Success
-  // }).catch(function (error) {
-  //     console.log(error)      // Failure
-  // });
-  // const newUser = new user.userModel({
-  //     name: "AdminUser",
-  //     password: "Admin@user123",
-  //     email: "Admin@user.com",
-  //     phoneNumber: "00121414252",
-  //     admin: "false"
-  // });
-  // newUser.save(function (err) {
-  //     if (err) {
-  //         console.log(err);
-  //     }
-  //     console.log("user inserted")
-  // });
+  if (typeCount === 0) {
+    await type.estateTypeModel.insertMany([
+      { name: 'Auction' },
+      { name: 'Sell' },
+      { name: 'Rent' }
+    ]);
+    console.log("types inserted");
+  }
+
+  if (userCount === 0) {
+    await user.userModel.create({
+      name: "AdminUser",
+      password: "Admin@user123",
+      email: "Admin@user.com",
+      phoneNumber: "00121414252",
+      admin: false
+    });
+    console.log("user inserted");
+  }
 }
+// await estateModel.insertMany([]);

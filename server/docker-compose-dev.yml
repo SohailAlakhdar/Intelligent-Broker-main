@@ -1,0 +1,50 @@
+# version: "2.9"
+# services:
+#   app-dev:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile
+#       target: dev
+#     container_name: Intelligent-Broker-dev
+#     environment:
+#       - co=value
+#     ports:
+#       - "4000:3000"
+#     volumes:
+#       - ./src:/app/src:ro
+#     env_file:
+#       - ./config/.env.dev
+services:
+  app-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+
+    container_name: intelligent-broker-dev
+
+    ports:
+      - "4000:3000"
+
+    volumes:
+      - ./src:/app/src
+      - /app/node_modules
+
+    env_file:
+      - ./config/.env.dev
+
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo
+    container_name: intelligent-broker-mongo
+
+    ports:
+      - "27017:27017"
+
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
