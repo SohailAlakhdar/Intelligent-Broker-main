@@ -1,8 +1,8 @@
 const express = require("express");
-const uploadpPic = require("../Controller/uploadPic");
+const uploadPic = require("../Controller/uploadPic");
 const estate = require("../Controller/estateController");
 const { validation } = require("../middlewares/validation.middleware.js");
-const { updateEstateSchema } = require("../middlewares/estate.validation.js");
+const { updateEstateSchema, updateEstateImageSchema } = require("../middlewares/estate.validation.js");
 const auth = require("../Controller/userController").verifyJWT;
 const adminCheck = require("../Controller/userController").serverAdminCheck;
 const router = express.Router();
@@ -24,13 +24,16 @@ router.delete("/deleteEstate", auth, function (req, res) {
   estate.deleteEstate(req, res);
 })
 
-const upFi = uploadpPic.upload.fields([{ name: 'contract' }, { name: 'pic' }])
+const upFi = uploadPic.upload.fields([
+  { name: 'contract', maxCount: 1 },  // only 1 contract
+  { name: 'pic', maxCount: 10 }       // match your MAX_PICS limit
+]);
 
 router.post("/addEstate", auth, upFi, function (req, res) {
   estate.addEstate(req, res);
 })
 
-router.put("/updateEstateImage", auth, upFi, function (req, res) {
+router.put("/updateEstateImage", auth, upFi, validation(updateEstateImageSchema), function (req, res) {
   estate.updateEstateImage(req, res);
 })
 

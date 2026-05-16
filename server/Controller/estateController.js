@@ -17,9 +17,10 @@ function picAddOperation(files, estate) {
   if (!files) return;
 
   if (files.contract) {
-    estate.contract = {};
-    estate.contract.path = files.contract[0].path;
-    estate.contract.name = files.contract[0].filename;
+    estate.contract = {
+      path: files.contract[0].path,
+      name: files.contract[0].filename,
+    };
   }
   if (files.pic) {
     files.pic.forEach((file) => {
@@ -32,10 +33,13 @@ function picAddOperation(files, estate) {
 }
 async function picDeleteOperation(picsToDelete) {
   try {
-    if (!picsToDelete || !picsToDelete.length) return;
-    const deletePromises = picsToDelete.map((name) =>
-      cloudinary.uploader.destroy(name),
-    );
+    if (!picsToDelete?.length) return;
+    const results = await Promise.all(deletePromises);
+    results.forEach((result, i) => {
+      if (result.result !== 'ok') {
+        console.warn(`Failed to delete: ${picsToDelete[i]}`, result);
+      }
+    });
     await Promise.all(deletePromises);
     console.log("All pictures deleted successfully");
   } catch (err) {
@@ -190,7 +194,7 @@ exports.updateEstateImage = async function (req, res) {
       data: estateDoc,
     });
   } catch (error) {
-    res.status(500).json(error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 

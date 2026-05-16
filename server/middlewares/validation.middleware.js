@@ -130,7 +130,9 @@ const validation = function (schema) {
 
             var validationResult = schema[key].validate(req[key], {
                 abortEarly: false,
+                context: { files: req.files }, // ← pass files as context
             });
+
 
             if (validationResult.error) {
                 validationErrors.push({

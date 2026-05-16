@@ -21,14 +21,21 @@ const estateSchema = new Schema({
   rate: { type: Number, default: 0, min: 0, max: 5 },
   type: { type: Schema.Types.ObjectId, ref: 'estateType', required: true },
   category: { type: Schema.Types.ObjectId, ref: 'category', required: true },
-  addressOnMap: { type: [Number], required: true },
+  addressOnMap: {
+    type: [Number],
+    validate: {
+      validator: arr => arr.length === 2,
+      message: "addressOnMap must contain [lat, lng]"
+    },
+    required: true
+  },
   contract: { type: { path: String, name: String }, required: true },
   pic: { type: [{ path: String, name: String }], required: true },
   auctionData: {
     endDate: { type: Date },
     duration: { type: Number },
   }
-});
+}, { timestamps: true });
 estateSchema.index({ address: "text", desc: "text" });
 const estateModel = mongoose.model('estate', estateSchema)
 exports.estateModel = estateModel;

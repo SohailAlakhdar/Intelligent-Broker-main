@@ -2,7 +2,7 @@
 
 
 git add .
-git commit -m "backend is ended"
+git commit -m "dockerize the app"
 git push -u origin main
 
 

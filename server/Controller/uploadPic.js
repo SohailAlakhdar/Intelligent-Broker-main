@@ -4,19 +4,38 @@ const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: {
-    folder: 'homeExplorerImages',
-  },
+  params: (req, file) => ({
+    folder: file.fieldname === 'contract'
+      ? 'homeExplorerContracts'
+      : 'homeExplorerImages',
+    resource_type: file.fieldname === 'contract' ? 'raw' : 'image'  // ← required for PDF
+  })
 });
 
 exports.upload = multer({
   storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB
+  },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype == "image/png" || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg") {
-      cb(null, true);
+    const allowed = ['image/png', 'image/jpeg', 'image/webp'];
+    if (file.fieldname === 'contract') {
+      if (file.mimetype === 'application/pdf' || allowed.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        req.file_error = { message: "Contract must be a PDF" };
+        cb(null, false);
+      }
+    } else if (file.fieldname === 'pic') {
+      if (allowed.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        req.file_error = { message: "Pictures must be PNG, JPEG, or WEBP" };
+        cb(null, false);
+      }
     } else {
-      req.file_error = "file not allowed Only .png, .jpg and .jpeg format allowed!";
-      return cb(null, false);
+      req.file_error = { message: "Unexpected field" };
+      cb(null, false);
     }
   }
 });
