@@ -1,0 +1,3 @@
+
+updateEsateImage:
+- check if the pic to be deleted is only one , don't d

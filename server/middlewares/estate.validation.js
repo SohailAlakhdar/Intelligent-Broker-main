@@ -41,8 +41,9 @@ const addEstateSchema = {
       "object.base": "Invalid estate data",
     }),
 };
-  
+
 const updateEstateImageSchema = {
+
   body: joi.object().keys({
     estateId: generalFields.id.required(),
     deletedPicNames: joi.string().allow(""),
@@ -55,26 +56,49 @@ const updateEstateImageSchema = {
       const hasNewPics = files?.pic?.length > 0;
       const hasNewContract = !!files?.contract;
 
-      // Rule 1: if no changes at all
       if (!hasDeletedPics && !hasNewPics && !hasNewContract) {
         return helpers.error("object.noChanges");
       }
 
-      // Rule 2: deleted pics → must upload new pics
-      if (hasDeletedPics && !hasNewPics) {
-        return helpers.error("object.missingReplacementPics");
-      }
-
-      // Rule 3: contract is handled automatically (replaces old)
-      // no extra validation needed
-
       return value;
     })
     .messages({
-      "object.base": "Invalid data for updating estate images",
+      "object.base": "Invalid data",
       "object.noChanges": "At least one change must be provided",
-      "object.missingReplacementPics": "You must upload new pictures to replace the deleted ones",
     }),
+
+  files: joi.object().keys({
+    pic: joi.array().items(
+      joi.object({
+        mimetype: joi.string()
+          .valid("image/jpeg", "image/png", "image/webp")
+          .required()
+          .messages({ "any.only": "Pictures must be JPEG, PNG, or WEBP" }),
+        size: joi.number()
+          .max(5 * 1024 * 1024)
+          .required()
+          .messages({ "number.max": "Each picture must be under 5MB" }),
+      }).unknown(true)
+    ).max(10).messages({
+      "array.max": "Cannot upload more than 10 pictures",
+    }),
+
+    contract: joi.array().items(
+      joi.object({
+        mimetype: joi.string()
+          .valid("application/pdf")
+          .required()
+          .messages({ "any.only": "Contract must be a PDF" }),
+        size: joi.number()
+          .max(10 * 1024 * 1024)
+          .required()
+          .messages({ "number.max": "Contract must be under 10MB" }),
+      }).unknown(true)
+    ).max(1).messages({
+      "array.max": "Only one contract allowed",
+    }),
+
+  }).unknown(true).allow(null),
 };
 
 

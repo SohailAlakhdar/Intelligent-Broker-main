@@ -6,8 +6,8 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: (req, file) => ({
     folder: file.fieldname === 'contract'
-      ? 'homeExplorerContracts'
-      : 'homeExplorerImages',
+      ? 'IntelligentBrokerContracts'
+      : 'IntelligentBrokerImages',
     resource_type: file.fieldname === 'contract' ? 'raw' : 'image'  // ← required for PDF
   })
 });
