@@ -164,7 +164,8 @@ export function getVisits(id) {
       "x-access-token": localStorage.getItem("HomExplorerToken"),
     },
   };
-  return callServer(url + "getVisitsDates/" + id, requestOptions, true);
+
+  return callServer(url + "getVisitsDates/", requestOptions, true);
 }
 
 export function scheduleVisit(data) {

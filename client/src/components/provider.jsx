@@ -23,19 +23,14 @@ const Provider = (props) => {
       }
       const save = await serverFunctions.getSaved();
       const estateReq = await serverFunctions.getEstateRequests();
-      const visitReq = await serverFunctions.getVisits(
-        JSON.stringify({ sellerId: UserId() }),
-      );
-      const myVisitsReq = await serverFunctions.getVisits(
-        JSON.stringify({ visitorId: UserId() }),
-      );
+      const visitReq = await serverFunctions.getVisits();
       setEstateRequests(estateReq);
       setSaveList(save);
       setVisitRequests({
-        approved: visitReq.approved,
-        rejected: visitReq.rejected,
-        pending: visitReq.pending,
-        myVisit: myVisitsReq,
+        approved: visitReq.filter((visit) => visit.status === "approved"),
+        rejected: visitReq.filter((visit) => visit.status === "rejected"),
+        pending: visitReq.filter((visit) => visit.status === "pending"),
+        myVisit: visitReq,
       });
     };
     fetchData();

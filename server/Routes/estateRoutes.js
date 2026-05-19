@@ -80,7 +80,7 @@ router.post("/search", function (req, res) {
 
 /*----------Sprint 3----------*/
 
-router.get("/getVisitsDates/:estateId", auth, function (req, res) {
+router.get("/getVisitsDates/", auth, function (req, res) {
   estate.getVisitsDates(req, res);
 })
 

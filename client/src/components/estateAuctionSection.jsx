@@ -30,10 +30,11 @@ function EstateAuctionSection(props) {
 
   return (
     <>
+      {console.log(auction)}
       {auction.auctionResult ? (
         <EndAuction data={auction.auctionResult} estateId={props.data._id} />
       ) : (
-        <PlaceBid daysRemain={auction} estate={props.data} />
+        <PlaceBid daysRemain={auction?.daysRemain} estate={props.data} />
       )}
     </>
   );

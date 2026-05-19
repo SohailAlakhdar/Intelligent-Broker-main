@@ -1,5 +1,5 @@
 export const CheckData = (props) => {
-  if (props === "error" || props === "NoData" || props.length === 0) {
+  if (props === "error" || props === "NoData" || props?.length === 0) {
     if (props.length === 0) {
       return "NoData";
     }

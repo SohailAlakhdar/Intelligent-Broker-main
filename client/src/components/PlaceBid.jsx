@@ -52,7 +52,7 @@ const PlaceBid = (props) => {
       <Button color="error" onClick={handlPlaceBidSubmite} variant="outlined">
         Bid Now !
       </Button>
-      <SmallNote>( {props.daysRemain} days Remain )</SmallNote>
+      <SmallNote>( {props?.daysRemain} days Remain )</SmallNote>
     </ScheduleCard>
   );
 };

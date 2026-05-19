@@ -285,7 +285,7 @@ function ApproveEstateReq(props) {
                                 <Button
                                   color="error"
                                   onClick={() => {
-                                    handelDecisionBtn(e._id, "reject");
+                                    handelDecisionBtn(e._id, "rejected");
                                   }}
                                   variant="outlined"
                                   startIcon={<CloseIcon />}
