@@ -15,14 +15,16 @@ async function main() {
       serverSelectionTimeoutMS: 30000,
     });
     console.log("Database connected 👌");
+    await initDb()
+
   } catch (error) {
     console.error("Database connection failed ❌", error);
   }
   //   await mongoose.connect('mongodb+srv://wamb:wamb123@homeexplorerdb.ykmn0.mongodb.net/HomExplorer'); // Atlas DB Server
 }
 
-initDb()
 async function initDb() {
+
   const categoryCount = await category.categoryModel.countDocuments();
   const typeCount = await type.estateTypeModel.countDocuments();
   const userCount = await user.userModel.countDocuments();
@@ -45,14 +47,15 @@ async function initDb() {
   }
 
   if (userCount === 0) {
+    const hashedPassword = await bcrypt.hash("Admin@user123", 10); // ← hash the password
     await user.userModel.create({
       name: "AdminUser",
-      password: "Admin@user123",
-      email: "Admin@user.com",
+      password: hashedPassword,
+      email: "admin@user.com",
       phoneNumber: "00121414252",
-      admin: false
+      admin: "true", // ← set as admin
     });
-    console.log("user inserted");
+    console.log("Admin user inserted ✅");
   }
 }
 // await estateModel.insertMany([]);

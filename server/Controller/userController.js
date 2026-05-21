@@ -18,8 +18,12 @@ exports.addUser = async function (req, res) {
     }
 
     req.body.password = await bcrypt.hash(req.body.password, 10);
-    const newUser = new user.userModel(req.body);
-
+    const newUser = new user.userModel({
+      userName: req.body.userName,
+      email: req.body.email,
+      password: req.body.password,
+      phone: req.body.phone,
+    });
     const savedUser = await newUser.save();
     createToken(savedUser, res);
   } catch (error) {
@@ -57,7 +61,7 @@ function createToken(user, res) {
     id: user._id,
     userName: user.userName,
     email: user.email,
-    admin: user.admin, // ✅ boolean
+    admin: user.admin,
   };
 
   const token = jwt.sign(
@@ -72,6 +76,7 @@ function createToken(user, res) {
     token: "Bearer " + token,
   });
 }
+
 exports.verifyJWT = function (req, res, next) {
   const authHeader = req.headers["x-access-token"];
 
@@ -90,6 +95,7 @@ exports.verifyJWT = function (req, res, next) {
     if (err) {
       return res.status(401).json({ isLoggedIn: false, message: "Failed To Authenticate" }); // ✅ 401
     }
+    console.log({ decoded });
     req.user = decoded;
     next();
   });

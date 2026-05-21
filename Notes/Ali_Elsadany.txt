@@ -1,0 +1,11 @@
+
+
+After deleteEstate => take alot of time to return response, why?
+
+update estate image => it not used?
+
+auction page => show the only the estates that are in auction, not the ones that are for sale
+
+لما يحط الموقع في address عايزه يتحط تلقائي في الmaps
+
+

@@ -1,16 +1,51 @@
 const asyncHandler = require("../utils/response").asyncHandler;
 const joi = require("joi");
+const fs = require("fs");
+
+const allowedImageTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+const allowedContractTypes = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
+
+async function validateFiles(files) {
+    const errors = [];
+
+    if (files?.contract) {
+        if (files.contract.length > 1) {
+            // Keep only the first contract and delete the rest
+            const extraContracts = files.contract.slice(1);
+            await Promise.all(
+                extraContracts.map((file) =>
+                    fs.promises.unlink(file.path).catch(console.error)
+                )
+            );
+            files.contract = files.contract.slice(0, 1);
+        }
+        const contract = files.contract[0];
+        if (!allowedContractTypes.includes(contract.mimetype)) {
+            errors.push("Contract must be a PDF or image file");
+        }
+    }
+
+    if (files?.pic) {
+        files.pic.forEach((image, index) => {
+            if (!allowedImageTypes.includes(image.mimetype)) {
+                errors.push(`Image ${index + 1} must be jpeg, png, or webp`);
+            }
+        });
+    }
+
+    return errors;
+};
+
+module.exports = { validateFiles };
 
 const generalFields = {
     auctionData: joi.object({
         duration: joi.number()
             .integer()
-            .min(1)
-            .required(),
+            .min(1).max(52),
 
         endDate: joi.date()
-            .iso()
-            .required(),
+            .iso(),
     }),
     addressOnMap: joi.array()
         .items(
@@ -31,7 +66,7 @@ const generalFields = {
         .required(),
 
     price: joi.number()
-        .min(1)
+        .min(1).max(200000000)
         .required(),
 
     numOfRooms: joi.number()
@@ -117,7 +152,28 @@ const generalFields = {
     },
 
     content: joi.string().required(),
-
+    files: joi
+        .object({
+            contract: joi
+                .array()
+                .length(1)
+                .required()
+                .messages({
+                    "any.required": "Contract file is required",
+                    "array.length": "Only one contract file is allowed",
+                }),
+            pic: joi
+                .array()
+                .min(1)
+                .max(10)
+                .required()
+                .messages({
+                    "any.required": "At least one image is required",
+                    "array.min": "At least one image is required",
+                    "array.max": "Maximum 10 images allowed",
+                }),
+        })
+        .required(),
 };
 
 
@@ -137,7 +193,7 @@ const validation = function (schema) {
             if (validationResult.error) {
                 validationErrors.push({
                     field: key,
-                    message: validationResult.error.details[0].message,
+                    messages: validationResult.error.details.map(d => d.message),
                 });
             }
         }
@@ -157,4 +213,5 @@ const validation = function (schema) {
 module.exports = {
     generalFields: generalFields,
     validation: validation,
+    validateFiles: validateFiles,
 };

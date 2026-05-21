@@ -29,7 +29,7 @@ function Products(props) {
       setData(res);
     };
 
-    console.log(location.state);
+    // console.log(location.state);
 
     if (location.state === "Auction") {
       fetchAuctionData();
@@ -65,7 +65,7 @@ function Products(props) {
 
     let res = await serverFunctions.searchData(data);
     setData(res);
-    console.log(res);
+    // console.log(res);
   };
 
   function checkDataFrom() {

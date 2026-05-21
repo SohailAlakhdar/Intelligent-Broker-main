@@ -115,10 +115,10 @@ exports.recommendationTrainingModel = async function () {
 
   const python = await spawn(pythonPath, [path.join(__dirname, '..', 'Model', 'recommendationTrainingModel.py')]);
   python.stdout.on('data', (data) => {
-    console.log(data.toString('utf8'));
+    // console.log(data.toString('utf8'));
   })
   python.stderr.on('data', (data) => {
-    console.log(data.toString('utf8'))
+    // console.log(data.toString('utf8'))
   })
 
 }
@@ -128,9 +128,9 @@ exports.TrainPredictModel = async function (req, res) {
   const python = await spawn('python', [path.join(__dirname, '..', 'Model', 'predictionTrainingModel.py')]);
 
   python.stdout.on('data', (data) => {
-    console.log(data.toString('utf8'))
+    // console.log(data.toString('utf8'))
   })
   python.stderr.on('data', (data) => {
-    console.log(data.toString('utf8'))
+    // console.log(data.toString('utf8'))
   })
 }

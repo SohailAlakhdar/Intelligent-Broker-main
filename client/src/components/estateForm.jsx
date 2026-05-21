@@ -114,7 +114,7 @@ function EstateForm(props) {
   };
 
   function handleChange(event) {
-    console.log("ex, ", event);
+    // console.log("ex, ", event);
 
     let name = event.target.name;
     let value = event.target.value;
@@ -128,7 +128,7 @@ function EstateForm(props) {
 
   function handlefile(event) {
     let picfile = event.target.files;
-    console.log(estate?.pic);
+    // console.log(estate?.pic);
 
     handleChange({
       target: { name: "pic", value: [...(estate?.pic || []), ...picfile] },

@@ -2,7 +2,7 @@ const express = require("express");
 const uploadPic = require("../Controller/uploadPic");
 const estate = require("../Controller/estateController");
 const { validation } = require("../middlewares/validation.middleware.js");
-const { updateEstateSchema, updateEstateImageSchema } = require("../middlewares/estate.validation.js");
+const { updateEstateSchema, updateEstateImageSchema, placeBidSchema, getAllEstatesSchema, addEstateSchema, approveEstateSchema, addAndUpdateRateSchema, getRatesSchema, deleteEstateSchema, scheduleVisitSchema, approveScheduleVisitSchema } = require("../middlewares/estate.validation.js");
 const auth = require("../Controller/userController").verifyJWT;
 const adminCheck = require("../Controller/userController").serverAdminCheck;
 const router = express.Router();
@@ -12,7 +12,7 @@ router.post("/insertManyEstates", function (req, res) {
   estate.insertManyEstates(req, res);
 })
 
-router.get("/getEstates/:partition", function (req, res) {
+router.get("/getEstates/:partition", validation(getAllEstatesSchema), function (req, res) {
   estate.getAllEstates(req, res);
 })
 
@@ -20,16 +20,16 @@ router.get("/findEstate/:estateId", function (req, res) {
   estate.findEstate(req, res);
 })
 
-router.delete("/deleteEstate", auth, function (req, res) {
+router.delete("/deleteEstate", auth, validation(deleteEstateSchema), function (req, res) {
   estate.deleteEstate(req, res);
 })
 
 const upFi = uploadPic.upload.fields([
-  { name: 'contract', maxCount: 1 },  // only 1 contract
+  { name: 'contract' },  // only 1 contract
   { name: 'pic', maxCount: 10 }       // match your MAX_PICS limit
 ]);
 
-router.post("/addEstate", auth, upFi, function (req, res) {
+router.post("/addEstate", auth, upFi, validation(addEstateSchema), function (req, res) {
   estate.addEstate(req, res);
 })
 
@@ -37,11 +37,11 @@ router.put("/updateEstateImage", auth, upFi, validation(updateEstateImageSchema)
   estate.updateEstateImage(req, res);
 })
 
-router.put("/updateEstate", auth, upFi, function (req, res) {
+router.put("/updateEstate", auth, upFi, validation(updateEstateSchema), function (req, res) {
   estate.updateEstate(req, res);
 })
 
-router.post("/approveEstate", auth, adminCheck, validation(updateEstateSchema), function (req, res) {
+router.post("/approveEstate", auth, adminCheck, validation(approveEstateSchema), function (req, res) {
   estate.approveEstate(req, res);
 })
 
@@ -58,11 +58,11 @@ router.get("/myEstates", auth, function (req, res) {
 })
 
 /*----------Sprint 2----------*/
-router.post("/addAndUpdateRate", auth, function (req, res) {
+router.post("/addAndUpdateRate", auth, validation(addAndUpdateRateSchema), function (req, res) {
   estate.addAndUpdateRate(req, res);
 })
 
-router.get("/getRates", auth, function (req, res) {
+router.get("/getRates", auth, validation(getRatesSchema), function (req, res) {
   estate.getRates(req, res);
 })
 
@@ -84,18 +84,18 @@ router.get("/getVisitsDates/", auth, function (req, res) {
   estate.getVisitsDates(req, res);
 })
 
-router.post("/scheduleVisit", auth, function (req, res) {
+router.post("/scheduleVisit", auth, validation(scheduleVisitSchema), function (req, res) {
   estate.scheduleAndUpdateVisit(req, res);
 })
 
-router.post("/approveScheduleVisit", auth, function (req, res) {
+router.post("/approveScheduleVisit", auth, validation(approveScheduleVisitSchema), function (req, res) {
   estate.approveScheduleVisit(req, res);
 })
 
 
 /*----------Sprint 4----------*/
 
-router.post("/placaBid", auth, function (req, res) {
+router.post("/placeBid", auth, validation(placeBidSchema), function (req, res) {
   estate.placeBid(req, res);
 })
 
