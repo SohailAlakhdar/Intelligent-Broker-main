@@ -576,32 +576,20 @@ exports.search = async function (req, res) {
 
 exports.scheduleAndUpdateVisit = async function (req, res) {
   try {
+    const { estateId, date, status } = req.body;
     // check these user doesn't have another pending visit for the same estate
     const estateDoc = await estate.estateModel.findOne({
       _id: req.body.estateId,
-      status: "approved",
+      visitorId: req.user.id,
     });
     if (!estateDoc) {
-      return res.status(404).json({ error: "Estate not found or not approved" });
+      return res.status(404).json({ error: "Estate not found" });
     }
-
-    const existingVisit = await visit.visitModel.findOne({
-      estateId: req.body.estateId,
-      visitorId: req.user.id,
-      status: "pending",
-    });
-    if (existingVisit) {
-      return res.status(400).json({
-        error: "You already have a pending visit for this estate"
-      });
-    }
-
-
     const visitDoc = await visit.visitModel.findOneAndUpdate(
       { estateId: req.body.estateId, visitorId: req.user.id },
       {
         date: req.body.date,
-        status: "pending",       // ← always set to pending on create/update
+        status: status || "pending",
       },
       {
         upsert: true,
@@ -609,7 +597,6 @@ exports.scheduleAndUpdateVisit = async function (req, res) {
         setDefaultsOnInsert: true,
       },
     );
-
     // Send email notification
     emailNotification
       .scheduleVisitNotificataion(visitDoc._id)

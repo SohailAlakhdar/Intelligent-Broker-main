@@ -220,7 +220,7 @@ const searchSchema = {
 const scheduleVisitSchema = {
   body: joi.object().keys({
     estateId: generalFields.id.required(),
-    date: joi.string().pattern(/^\d{4}\/\d{1,2}\/\d{1,2}$/).required(), // "date":"2027/2/2"
+    date: joi.string().required(),
   }).required()
     .messages({
       "object.base": "Invalid visit scheduling data",

@@ -19,6 +19,8 @@ const addUserSchema = {
             "object.base": "Invalid user data",
         }),
 };
+
+
 module.exports = {
     addUserSchema
 };

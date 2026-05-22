@@ -95,7 +95,6 @@ exports.verifyJWT = function (req, res, next) {
     if (err) {
       return res.status(401).json({ isLoggedIn: false, message: "Failed To Authenticate" }); // ✅ 401
     }
-    console.log({ decoded });
     req.user = decoded;
     next();
   });
