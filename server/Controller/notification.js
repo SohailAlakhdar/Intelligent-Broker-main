@@ -28,113 +28,154 @@ let mailOptions = {
 exports.placeBidNotification = async function (estateId, userEmail) {
   try {
     const bids = await bid.bidModel
-      .find({ estateId: estateId })
-      .populate('userId', 'email');
+      .find({ estateId })
+      .populate("userId", "email");
 
-    bids.forEach(bid => {
-      let subject;
-      let body;
-      if (bid.userId.email === userEmail) {
-        // The user who just placed the bid
-        subject = "Intelligent Broker Estate Auction";
-        body = "Congrats!! Your bid was successfully submitted.";
-      } else {
-        // Other bidders
-        subject = "Update on Intelligent Broker Auction Estate";
-        body = "Someone placed a higher bid than yours! Go place a higher bid.";
-      }
-      emailNotification(bid.userId.email, subject, auctionEmailTemplate(body));
-    });
+    await Promise.all(
+      bids
+        .filter(bid => bid.userId?.email)  // skip deleted/missing users
+        .map(bid => {
+          const isCurrent = bid.userId.email === userEmail;
+          const subject = isCurrent
+            ? "Intelligent Broker Estate Auction"
+            : "Update on Intelligent Broker Auction Estate";
+          const body = isCurrent
+            ? "Congrats!! Your bid was successfully submitted."
+            : "Someone placed a higher bid than yours! Go place a higher bid.";
+
+          return emailNotification(bid.userId.email, subject, auctionEmailTemplate(body));
+        })
+    );
+
   } catch (err) {
-    console.log("Error in placeBidNotification:", err);
+    console.error("placeBidNotification error:", err);
   }
 };
 
-exports.scheduleVisitNotificataion = async function (visitId) {
+
+exports.scheduleVisitNotification = async function (visitId) {
   try {
-    let visitData = await visit.visitModel.findOne({ _id: visitId }).populate([
-      { path: 'visitorId', select: 'email' }, { path: 'estateId', populate: { path: 'sellerId', select: 'email' } }]);
+    const visitData = await visit.visitModel
+      .findOne({ _id: visitId })
+      .populate([
+        { path: "visitorId", select: "email" },
+        { path: "estateId", populate: { path: "sellerId", select: "email" } },
+      ]);
+
     if (!visitData) {
-      console.log("Visit not found");
+      console.error("scheduleVisitNotification: visit not found:", visitId);
       return;
     }
-    const visitDate = new Date(
-      visitData.date
-    ).toLocaleString();
+
+    // Guard against broken references
+    const visitorEmail = visitData.visitorId?.email;
+    const sellerEmail = visitData.estateId?.sellerId?.email;
+
+    if (!visitorEmail || !sellerEmail) {
+      console.error("scheduleVisitNotification: missing email on visitor or seller:", visitId);
+      return;
+    }
+
+    // Consistent date format regardless of server locale
+    const visitDate = new Date(visitData.date).toLocaleString("en-GB", {
+      dateStyle: "full",
+      timeStyle: "short",
+    });
+
     const subject = "Intelligent Broker - Estate Visit";
+
     const userBody = `
 Visit scheduled successfully.
 
 Date: ${visitDate}
-Property: ${visitData.estateId.address}
+Property: ${visitData.estateId.address || "Unknown Address"}
 
-We will notify you when owner responds.
+We will notify you when the owner responds.
 `;
 
     const ownerBody = `
 New visit request received.
 
 Date: ${visitDate}
-Visitor: ${visitData.visitorId.email}
+Visitor: ${visitorEmail}
 
 Please login to respond.
 `;
+
     await Promise.all([
-
-      emailNotification(
-        visitData.visitorId.email,
-        subject,
-        scheduleVisitEmailTemplate(userBody)
-      ),
-
-      emailNotification(
-        visitData.estateId.sellerId.email,
-        subject,
-        scheduleVisitEmailTemplate(ownerBody)
-      )
-
+      emailNotification(visitorEmail, subject, scheduleVisitEmailTemplate(userBody)),
+      emailNotification(sellerEmail, subject, scheduleVisitEmailTemplate(ownerBody)),
     ]);
 
   } catch (err) {
-    console.log(err);
+    console.error("scheduleVisitNotification error:", err);
   }
-}
+};
 
-exports.scheduleVisitReplyNotification  = async function (visitId) {
+exports.scheduleVisitReplyNotification = async function (visitId) {
   try {
-    let visitData = await visit.visitModel.findOne({ _id: visitId }).populate([{ path: 'visitorId', select: 'email' }, { path: 'estateId', select: 'address' }]);
+    const visitData = await visit.visitModel
+      .findOne({ _id: visitId })
+      .populate([
+        { path: "visitorId", select: "email" },
+        { path: "estateId", select: "address" },
+      ]);
+
     if (!visitData) {
-      console.log("Visit not found");
+      console.error("scheduleVisitReplyNotification: visit not found:", visitId);
       return;
     }
 
-    const subject =
-      "Update on Intelligent Broker Estate Visit Schedule";
-    const body =
-      `Your request to visit ${visitData.estateId.address}
-       has been updated. Please check your account.`;
-    await emailNotification(visitData.visitorId.email, subject, scheduleVisitEmailTemplate(body));
+    const visitorEmail = visitData.visitorId?.email;
+    const estateAddress = visitData.estateId?.address;
+
+    if (!visitorEmail || !estateAddress) {
+      console.error("scheduleVisitReplyNotification: missing email or address:", visitId);
+      return;
+    }
+
+    const subject = "Update on Intelligent Broker Estate Visit Schedule";
+    const body = `Your request to visit ${estateAddress} has been updated. Please check your account.`;
+
+    await emailNotification(visitorEmail, subject, scheduleVisitEmailTemplate(body));
+
   } catch (err) {
-    console.log(err);
+    console.error("scheduleVisitReplyNotification error:", err);
   }
-}
+};
 
 exports.estateNotification = async function (estateData) {
-  try {
-    let subject = "Update on Intelligent Broker estate status";
-    let body = "Your request for " + estateData.address + " estate was Updated check it ";
-    emailNotification(estateData.sellerId.email, subject, body)
-    if (estateData.status === "approved") {
-      body = "New updates on " + estateData.estateId.address + " estate check it";
-      let savedEstatesData = await save.savedModel.find({ estateId: estateData._id }).populate('visitorId', 'email');
-      savedEstatesData.forEach(element => {
-        emailNotification(element.sellerId.email, subject, body)
-      });
-    }
-  } catch (err) {
-    console.log(err);
+  if (!estateData || !estateData.sellerId?.email) {
+    console.error("estateNotification: missing estateData or seller email:", estateData);
+    return;
   }
-}
+
+  try {
+    const subject = "Update on Intelligent Broker estate status";
+    const sellerBody = `Your request for ${estateData.address} estate was updated, check it.`;
+
+    await emailNotification(estateData.sellerId.email, subject, sellerBody);
+
+    if (estateData.status === "approved") {
+      const savedEstates = await save.savedModel
+        .find({ estateId: estateData._id })
+        .populate("visitorId", "email");
+
+      const visitorBody = `New updates on ${estateData.address} estate, check it.`;
+
+      await Promise.all(
+        savedEstates
+          .filter(element => element.visitorId?.email)
+          .map(element =>
+            emailNotification(element.visitorId.email, subject, visitorBody)
+          )
+      );
+    }
+
+  } catch (err) {
+    console.error("estateNotification error:", err);
+  }
+};
 
 async function emailNotification(to, subject, html) {
   try {

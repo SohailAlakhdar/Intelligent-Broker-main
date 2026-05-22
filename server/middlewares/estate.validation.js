@@ -19,7 +19,7 @@ const getAllEstatesSchema = {
 
 const updateEstateSchema = {
   body: joi.object().keys({
-    estateId: generalFields.id.required(),
+    _id: generalFields.id.required(),
     address: generalFields.address.optional(),
     price: joi.number().min(1).max(200000000).optional(),
     numOfRooms: joi.number().integer().min(1).max(30).optional(),

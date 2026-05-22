@@ -1,6 +1,9 @@
 
 
 After deleteEstate => take alot of time to return response, why?
+delete estate => search with estateId not id!!
+
+
 
 update estate image => it not used?
 
