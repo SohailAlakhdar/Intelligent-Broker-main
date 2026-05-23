@@ -557,7 +557,6 @@ exports.scheduleAndUpdateVisit = async function (req, res) {
     // check these user doesn't have another pending visit for the same estate
     const estateDoc = await estate.estateModel.findOne({
       _id: req.body.estateId,
-      visitorId: req.user.id,
     });
     if (!estateDoc) {
       return res.status(404).json({ error: "Estate not found" });
@@ -575,9 +574,8 @@ exports.scheduleAndUpdateVisit = async function (req, res) {
       },
     );
     // Send email notification
-    emailNotification
-      .scheduleVisitNotificataion(visitDoc._id)
-      .catch((err) => console.log(err));
+    emailNotification.scheduleVisitNotification(visit, estate, user);
+
     res.status(200).json({ message: "Done", visit: visitDoc });
   } catch (err) {
     console.error(err);
