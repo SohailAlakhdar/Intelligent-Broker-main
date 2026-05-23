@@ -20,7 +20,7 @@ function PicSlider(props){
 
   return(<>
     <EstateIcobDiv className ={props.from === "details" && "expandIcone"} >
-    <EstateIcon src={props.pic[activeStep].path}  />
+    <EstateIcon src={props.pic[activeStep]?.path}  />
   </EstateIcobDiv>
   {props.from === "details" &&
       <div>
