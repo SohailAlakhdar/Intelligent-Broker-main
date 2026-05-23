@@ -8,14 +8,15 @@ import * as serverUserFunctions from "../serverFunctions/user";
 import EstateReports from "../components/estateReports";
 function AdminDashBoard() {
   const navigate = useNavigate();
+  const CheckAdminAuth = async () => {
+    if (CheckAuth()) {
+      let res = await serverUserFunctions.checkAdmin();
+
+      if (res.isAdmin === true) return;
+    }
+    return navigate("/");
+  };
   React.useEffect(() => {
-    const CheckAdminAuth = async () => {
-      if (CheckAuth()) {
-        let res = await serverUserFunctions.checkAdmin();
-        if (res === true) return;
-      }
-      return navigate("/");
-    };
     CheckAdminAuth();
   }, [navigate]);
 
