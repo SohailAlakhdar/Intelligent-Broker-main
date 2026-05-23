@@ -179,7 +179,7 @@ function Services(props) {
                         .slice((Math.ceil(page) - 1) * 12, Math.ceil(page) * 12)
                         .map((e) => (
                           <EstateCard
-                            key={e._id}
+                            key={e?._id}
                             data={e}
                             ID={props.ID}
                             handleDetailsClick={handleDetailsAndCompare}
