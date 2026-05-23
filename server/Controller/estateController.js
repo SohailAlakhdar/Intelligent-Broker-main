@@ -598,16 +598,6 @@ exports.approveScheduleVisit = async function (req, res) {
         error: "Visit not found",
       });
     }
-
-    // Authorization check or admin check
-    if (
-      !visitDoc.estateId.sellerId.equals(req.user.id) &&
-      req.user?.admin == "false"
-    ) {
-      return res.status(403).json({
-        error: "Not authorized",
-      });
-    }
     visitDoc.status = req.body.status;
     await visitDoc.save();
 
@@ -625,70 +615,60 @@ exports.approveScheduleVisit = async function (req, res) {
   }
 };
 
-// exports.getVisitsDates = async function (req, res) {
-//   try {
-//     const visits = await visit.visitModel
-//       .find()
-//       .populate("estateId")
-//       .populate("visitorId", "name email phoneNumber");
-
-//     const filteredVisits = visits.filter(
-//       (visitDoc) =>
-//         visitDoc.estateId &&
-//         visitDoc.estateId.sellerId?.toString() === req.user.id,
-//     );
-
-
-//     return res.status(200).json(filteredVisits);
-//   } catch (err) {
-//     console.error("getVisitsDates error:", err);
-//     return res.status(500).json({ error: err.message });
-//   }
-// };
 exports.getVisitsDates = async function (req, res) {
   try {
-    const { estateId, sellerId, visitorId } = req.query; // use query params, not raw JSON
-
-    // // Authorization: user can only query their own visits
-    // if (visitorId && visitorId !== req.user.id) {
-    //   return res.status(403).json({ error: "Not authorized" });
-    // }
-    // if (sellerId && sellerId !== req.user.id) {
-    //   return res.status(403).json({ error: "Not authorized" });
-    // }
-
-    // Build a safe, whitelisted filter
-    const filter = {};
-    if (estateId) filter.estateId = estateId;
-    if (visitorId) filter.visitorId = visitorId;
-
-    const results = await visit.visitModel
-      .find(filter)
+    const visits = await visit.visitModel
+      .find()
       .populate("estateId")
       .populate("visitorId", "name email phoneNumber");
 
-    if (sellerId) {
-      // Filter by sellerId at DB level would require a different schema/query,
-      // so we filter here but only after fetching the user's own estates
-      const data = { approved: [], rejected: [], pending: [] };
+    const filteredVisits = visits.filter(
+      (visitDoc) =>
+        visitDoc.estateId &&
+        visitDoc.estateId.sellerId?.toString() === req.user.id,
+    );
 
-      results.forEach(item => {
-        if (item.estateId?.sellerId?.toString() !== sellerId) return;
-        if (item.status === "approved") data.approved.push(item);
-        else if (item.status === "rejected") data.rejected.push(item);
-        else if (item.status === "pending") data.pending.push(item);
-      });
 
-      return res.status(200).json(data);
-    }
-
-    res.status(200).json(results);
-
+    return res.status(200).json(filteredVisits);
   } catch (err) {
     console.error("getVisitsDates error:", err);
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 };
+// exports.getVisitsDates = async function (req, res) {
+//   try {
+//     const { estateId, sellerId, visitorId } = req.query; // use query params, not raw JSON
+
+
+//     // Build a safe, whitelisted filter
+//     const filter = {};
+//     if (estateId) filter.estateId = estateId;
+//     if (visitorId) filter.visitorId = visitorId;
+
+//     const results = await visit.visitModel
+//       .find(filter)
+//       .populate("estateId")
+//       .populate("visitorId", "name email phoneNumber");
+
+//     if (sellerId) {
+//       // Filter by sellerId at DB level would require a different schema/query,
+//       // so we filter here but only after fetching the user's own estates
+//       const data = { approved: [], rejected: [], pending: [] };
+
+//       results.forEach(item => {
+//         if (item.estateId?.sellerId?.toString() !== sellerId) return;
+//         if (item.status === "approved") data.approved.push(item);
+//         else if (item.status === "rejected") data.rejected.push(item);
+//         else if (item.status === "pending") data.pending.push(item);
+//       });
+//       return res.status(200).json(data);
+//     }
+//     res.status(200).json(results);
+//   } catch (err) {
+//     console.error("getVisitsDates error:", err);
+//     res.status(500).json({ error: err.message });
+//   }
+// };
 /*---------------------------- Sprint 4 ----------------------*/
 
 exports.approveAuction = async function (req, res) {
