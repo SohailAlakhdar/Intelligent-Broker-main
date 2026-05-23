@@ -19,12 +19,12 @@ function EstateCard(props){
   return(
     <EstateCardDivCard onClick={handleDetails}>
 
-    <PicSlider pic={[props.data.pic[0]]} />
-    <EstateCardH2>{props.data.price}
+    <PicSlider pic={[props?.data?.pic[0]]} />
+    <EstateCardH2>{props.data?.price}
       $</EstateCardH2>
     <EstateCardDiv>
       <p>
-        {props.data.desc.substring(0, 50) + "...."}
+        {props.data?.desc?.substring(0, 50) + "...."}
       </p>
     </EstateCardDiv>
   </EstateCardDivCard>
