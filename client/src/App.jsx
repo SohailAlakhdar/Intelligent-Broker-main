@@ -6,7 +6,7 @@ import Navbar from "./components/navbar.jsx";
 import Footer from "./components/footer.jsx";
 import Home from "./pages/homePage.jsx";
 import Products from "./pages/productsPage.jsx";
-import Admin from "./pages/admin.jsx";
+import ManageEstates from "./pages/manageEstates.jsx";
 import Provider from "./components/provider.jsx";
 import AdminDashBoard from "./pages/adminDashBoard.jsx";
 import AuthPage from "./pages/authPage.jsx";
@@ -33,7 +33,7 @@ function App() {
         <Routes>
           <Route exact path="" element={<Home auth={auth} />} />
           <Route exact path="products" element={<Products />} />
-          <Route exact path="admin" element={<Admin />} />
+          <Route exact path="estates" element={<ManageEstates />} />
           <Route exact path="adminDashBoard" element={<AdminDashBoard />} />
           <Route
             exact

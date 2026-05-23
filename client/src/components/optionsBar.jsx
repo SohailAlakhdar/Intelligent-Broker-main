@@ -50,7 +50,7 @@ function OptionsBar(props) {
               </ListItem>
 
               <ListItem onClick={toggleDrawer(false)} button>
-                <OptionsBarLinks to="/admin#SaveList">
+                <OptionsBarLinks to="/estates#SaveList">
                   <Button
                     color="success"
                     variant="outlined"
@@ -62,7 +62,7 @@ function OptionsBar(props) {
               </ListItem>
 
               <ListItem onClick={toggleDrawer(false)} button>
-                <OptionsBarLinks to="/admin#MyEstate">
+                <OptionsBarLinks to="/estates#MyEstate">
                   <Button
                     color="success"
                     variant="outlined"
@@ -74,7 +74,7 @@ function OptionsBar(props) {
               </ListItem>
 
               <ListItem onClick={toggleDrawer(false)} button>
-                <OptionsBarLinks to="/admin#VisitRequests">
+                <OptionsBarLinks to="/estates#VisitRequests">
                   <Badge
                     badgeContent={
                       context.visitRequests.pending
@@ -97,7 +97,7 @@ function OptionsBar(props) {
 
               {adminAuth && (
                 <ListItem onClick={toggleDrawer(false)} button>
-                  <OptionsBarLinks to="/adminDashBoard#EstatesRequests">
+                  <OptionsBarLinks to="/estatesDashBoard#EstatesRequests">
                     <Badge
                       badgeContent={
                         context.estateRequests === "error" ||

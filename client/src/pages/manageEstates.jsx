@@ -5,14 +5,11 @@ import * as serverEstateFunctions from "../serverFunctions/estate";
 import { MyContext } from "../components/provider";
 import { CheckAuth } from "../components/checkData";
 import { useNavigate } from "react-router-dom";
-function Admin() {
+function ManageEstates() {
   const [myEstate, setMyEstate] = React.useState("Loading");
   const [update, setUpdate] = React.useState(0);
   const navigate = useNavigate();
   React.useEffect(() => {
-    if (!CheckAuth(true)) {
-      return navigate("/");
-    }
     const getMyEstate = async () => {
       let res = await serverEstateFunctions.getMyEstates();
       setMyEstate(res);
@@ -61,4 +58,4 @@ function Admin() {
     </MyContext.Consumer>
   );
 }
-export default Admin;
+export default ManageEstates;
