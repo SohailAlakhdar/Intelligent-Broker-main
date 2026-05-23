@@ -643,7 +643,6 @@ exports.approveScheduleVisit = async function (req, res) {
         error: "Visit not found",
       });
     }
-    console.log({ user: req.user });
 
     // Authorization check or admin check
     if (
