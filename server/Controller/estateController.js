@@ -88,13 +88,13 @@ exports.getAllEstates = async function (req, res) {
 
 exports.deleteEstate = async function (req, res) {
   try {
-    const estateDoc = await estate.estateModel.findById(req.body.estateId);
+    const estateDoc = await estate.estateModel.findById(req.body_id);
     if (!estateDoc) {
       return res.status(404).json({ error: "Estate not found" });
     }
 
     // Delete estate
-    await estate.estateModel.findByIdAndDelete(req.body.estateId);
+    await estate.estateModel.findByIdAndDelete(req.body_id);
 
     // Delete images from cloudinary
     await picDeleteOperation(
@@ -117,7 +117,7 @@ exports.deleteEstate = async function (req, res) {
     return res.status(500).json({ error: err.message });
   }
 };
-// not used in homeExplorer
+
 exports.findEstate = async function (req, res) {
   try {
     const doc = await estate.estateModel
@@ -265,7 +265,7 @@ exports.updateEstate = async function (req, res) {
   }
 
   try {
-    const data = await estate.estateModel.findById({ _id: req.body._id });
+    const data = await estate.estateModel.findById({ _id: req.body.estateId });
     if (!data) return res.status(404).send(JSON.stringify("Estate not found"));
 
     if (req.body.deletedPicNames || (req.files && req.files.contract)) {
@@ -305,7 +305,7 @@ exports.updateEstate = async function (req, res) {
     if (!req.body.status) req.body.status = "pending";
 
     await estate.estateModel.updateOne(
-      { _id: req.body._id },
+      { _id: req.body.estateId },
       { $set: req.body }
     );
 
@@ -721,11 +721,13 @@ exports.approveAuction = async function (req, res) {
 
 exports.placeBid = async function (req, res) {
   try {
+    console.log("Bid0");
     const auctionEndStatus = await auctionEnd(req.body.estateId);
 
     if (auctionEndStatus.status || auctionEndStatus.auctionOwner === req.user.id) {
       return res.status(400).send(JSON.stringify("Can't place bid on an ended auction"));
     }
+    console.log("Bid1");
 
     const newBid = new bid.bidModel(req.body);
     newBid.userId = req.user.id;
@@ -734,6 +736,7 @@ exports.placeBid = async function (req, res) {
       { _id: req.body.estateId },
       { price: req.body.price }
     ).exec();
+    console.log("Bid2");
 
     emailNotification.placeBidNotification(req.body.estateId); // fire-and-forget is fine
 

@@ -115,7 +115,7 @@ exports.serverAdminCheck = async function (req, res, next) {
 
 exports.checkAdmin = function (req, res) {
   user.userModel.findOne({ _id: req.user.id, admin: true })
-    .then(user => res.status(200).json({ isAdmin: !!user })) // ✅ proper json response
+    .then(foundUser => res.status(200).json({ isAdmin: !!foundUser }))
     .catch(err => res.status(500).json({ error: err.message }));
 };
 

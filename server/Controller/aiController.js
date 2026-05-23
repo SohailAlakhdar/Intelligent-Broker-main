@@ -66,31 +66,54 @@ async function getRecommendedEstate(ids) {
 //     console.log(data.toString('utf8'));
 //   })
 // }
-exports.predictEstate = async function (req, res) {
+exports.predictEstate = function (req, res) {
+  let formData;
 
-  const formData = preprocess_request(req);
+  try {
+    formData = preprocess_request(req);
+  } catch (err) {
+    return res.status(400).json({ error: "Invalid request data" });
+  }
 
-  const python = spawn(
-    pythonPath,
-    [
-      path.join(__dirname, '..', 'Model', 'predictionModel.py'),
-      formData.join(",")
-    ]
-  );
+  // Validate all fields are numeric to prevent injection
+  if (!formData.every(val => Number.isFinite(Number(val)))) {
+    return res.status(400).json({ error: "Form data must contain only numeric values" });
+  }
+
+  const python = spawn(pythonPath, [
+    path.join(__dirname, '..', 'Model', 'predictionModel.py'),
+    formData.join(",")
+  ]);
 
   let result = "";
+  let errorOutput = "";
 
   python.stdout.on('data', (data) => {
     result += data.toString('utf8');
   });
 
-  python.on('close', () => {
-    const price = Number(result.trim()).toFixed(0);
-    res.send({ result: price });
+  python.stderr.on('data', (data) => {
+    errorOutput += data.toString('utf8');
   });
 
-  python.stderr.on('data', (data) => {
-    console.log("Python error:", data.toString());
+  python.on('close', (code) => {
+    if (code !== 0) {
+      console.error("Python error:", errorOutput);
+      return res.status(500).json({ error: "Prediction failed" });
+    }
+
+    const price = Math.round(Number(result.trim()));
+
+    if (isNaN(price)) {
+      return res.status(500).json({ error: "Invalid prediction output" });
+    }
+
+    res.json({ result: price }); // number, not string
+  });
+
+  python.on('error', (err) => {
+    console.error("Spawn error:", err);
+    res.status(500).json({ error: "Failed to start prediction process" });
   });
 };
 

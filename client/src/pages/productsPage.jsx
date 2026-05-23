@@ -35,8 +35,6 @@ function Products(props) {
       fetchAuctionData();
     } else if (location.state === "Recommendation") {
       fetchRecommendationData();
-    } else {
-      fetchRecommendationData();
     }
   }, [location.state, navigate]);
 
