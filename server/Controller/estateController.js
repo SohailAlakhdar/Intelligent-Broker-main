@@ -600,6 +600,16 @@ exports.approveScheduleVisit = async function (req, res) {
         error: "Visit not found",
       });
     }
+
+    // Authorization check or admin check
+    if (
+      !visitDoc.estateId.sellerId.equals(req.user.id) &&
+      req.user?.admin == "false"
+    ) {
+      return res.status(403).json({
+        error: "Not authorized",
+      });
+    }
     visitDoc.status = req.body.status;
     await visitDoc.save();
 

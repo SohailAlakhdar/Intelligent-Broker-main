@@ -29,7 +29,7 @@ function Products(props) {
       setData(res);
     };
 
-    // console.log(location.state);
+    console.log(location.state);
 
     if (location.state === "Auction") {
       fetchAuctionData();
