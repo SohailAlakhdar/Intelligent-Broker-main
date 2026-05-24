@@ -3,52 +3,82 @@ const { spawn } = require("child_process");
 const path = require('path')
 const estate = require("../Model/estateModel");
 const pythonPath = path.join(__dirname, '..', '.venv', 'Scripts', 'python.exe');
+const { promisify } = require('util');
+const { spawn } = require('child_process');
 
-function contains(target, pattern) {
-  var value = 0;
-  pattern.forEach(function (word) {
-    value = value + target.includes(word);
-  });
-  return (value === 1)
+// Returns 1 if ANY keyword from pattern is found in target, 0 otherwise
+function containsKeyword(target, keywords) {
+  return keywords.some(word => target.includes(word)) ? 1 : 0;
 }
+const FEATURE_KEYWORDS = {
+  pool: ["pool", "مسبح", "سباحة", "سباحه"],
+  garden: ["garden", "حديقة", "حديقه", "جنينة", "جنينه"],
+  seaView: ["sea", "nile", "نيل", "بحر", "بحيرة", "بحيره"],
+  roof: ["roof", "سطح", "روف"],
+  compound: ["compound", "مجمع", "كمباوند", "كومباوند", "كموند"],
+};
 
-function preprocess_request(req) {
+function preprocessRequest(req) {
+  const { numOfRooms, numOfBathRooms, size, addressOnMap, category, desc } = req.body;
 
-  let formData = {}
+  const categoryCode = category === 'Apartment' ? 1 : 2;
 
-  formData.numOfRooms = req.body.numOfRooms
-  formData.numOfBathRooms = req.body.numOfBathRooms
-  formData.size = req.body.size
-  formData.addressOnMap = req.body.addressOnMap;
+  const features = Object.fromEntries(
+    Object.entries(FEATURE_KEYWORDS).map(([key, keywords]) => [
+      key,
+      containsKeyword(desc, keywords),
+    ])
+  );
 
-  if (req.body.category == 'Apartment') { formData.category = 1 } else { formData.category = 2 }
-
-  formData.pool = contains(req.body.desc, ["Pool", "pool", "مسبح", "سباحة", "سباحه"])
-  if (formData.pool === true) { formData.pool = 1 } else { formData.pool = 0 }
-
-  formData.garden = contains(req.body.desc, ["garden", "Garden", "حديقة", "حديقه", "جنينة", "جنينه"])
-  if (formData.garden === true) { formData.garden = 1 } else { formData.garden = 0 }
-
-  formData.SeaView = contains(req.body.desc, ["Sea", "sea", "Nile", "nile", "نيل", "بحر", "بحيرة", "بحيره"])
-  if (formData.SeaView === true) { formData.SeaView = 1 } else { formData.SeaView = 0 }
-
-  formData.roof = contains(req.body.desc, ["roof", "Roof", "سطح", "روف"])
-  if (formData.roof === true) { formData.roof = 1 } else { formData.roof = 0 }
-
-  formData.compound = contains(req.body.desc, ["Compund", "compund", "مجمع", "كموند", "كمباوند", "كومباوند"])
-  if (formData.compound === true) { formData.compound = 1 } else { formData.compound = 0 }
-
-  return [formData.numOfRooms, formData.numOfBathRooms, formData.category, formData.size, formData.addressOnMap[0], formData.addressOnMap[1], formData.garden, formData.pool, formData.SeaView, formData.roof, formData.compound]
-
+  return [
+    numOfRooms,
+    numOfBathRooms,
+    categoryCode,
+    size,
+    addressOnMap[0],
+    addressOnMap[1],
+    features.garden,
+    features.pool,
+    features.seaView,
+    features.roof,
+    features.compound,
+  ];
 }
 
 async function getRecommendedEstate(ids) {
-  const estates = await estate.estateModel.find({
-    status: 'approved',
-    _id: { $in: ids }
-  }).populate('category').populate("type").exec()
+  return estate.estateModel
+    .find({
+      status: 'approved',
+      _id: { $in: ids },
+    })
+    .populate('category')
+    .populate('type')
+    .exec();
+}
 
-  return estates
+// Helper to run a Python script and return a Promise
+function runPythonScript(scriptPath, args = []) {
+  return new Promise((resolve, reject) => {
+    const python = spawn(pythonPath, [scriptPath, ...args]);
+
+    let stderr = '';
+
+    python.stderr.on('data', (data) => {
+      stderr += data.toString('utf8');
+    });
+
+    python.on('close', (code) => {
+      if (code !== 0) {
+        reject(new Error(`Script failed with code ${code}: ${stderr}`));
+      } else {
+        resolve();
+      }
+    });
+
+    python.on('error', (err) => {
+      reject(new Error(`Failed to start process: ${err.message}`));
+    });
+  });
 }
 
 
@@ -119,41 +149,68 @@ exports.predictEstate = function (req, res) {
 
 
 exports.getRecommendedEstate = async function (req, res) {
+  try {
+    const python = spawn(pythonPath, [
+      path.join(__dirname, '..', 'Model', 'recommendationModel.py'),
+      req.user.id,
+    ]);
 
-  const python = await spawn(pythonPath, [path.join(__dirname, '..', 'Model', 'recommendationModel.py'), req.user.id]);
+    let dataBuffer = '';
 
-  python.stdout.on('data', async (data) => {
-    const ids = JSON.parse(data.toString('utf8').replace("\n", ""));
-    const estates = await getRecommendedEstate(ids)
-    res.send(estates)
-  })
-  python.stderr.on('data', (data) => {
-    console.log(data.toString('utf8'))
-  })
+    python.stdout.on('data', (chunk) => {
+      dataBuffer += chunk.toString('utf8');
+    });
 
-}
+    python.stderr.on('data', (data) => {
+      console.error('[Python error]:', data.toString('utf8'));
+    });
+
+    python.on('close', async (code) => {
+      if (code !== 0) {
+        return res.status(500).json({ error: 'Recommendation model failed' });
+      }
+
+      try {
+        const ids = JSON.parse(dataBuffer.trim());
+        const estates = await getRecommendedEstate(ids);
+        res.json(estates);
+      } catch (parseError) {
+        console.error('Failed to parse Python output:', parseError);
+        res.status(500).json({ error: 'Invalid model output' });
+      }
+    });
+
+    python.on('error', (err) => {
+      console.error('Failed to start Python process:', err);
+      res.status(500).json({ error: 'Failed to start recommendation model' });
+    });
+
+  } catch (err) {
+    console.error('Unexpected error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
 
 
 exports.recommendationTrainingModel = async function () {
-
-  const python = await spawn(pythonPath, [path.join(__dirname, '..', 'Model', 'recommendationTrainingModel.py')]);
-  python.stdout.on('data', (data) => {
-    // console.log(data.toString('utf8'));
-  })
-  python.stderr.on('data', (data) => {
-    // console.log(data.toString('utf8'))
-  })
-
-}
+  try {
+    await runPythonScript(
+      path.join(__dirname, '..', 'Model', 'recommendationTrainingModel.py')
+    );
+    console.log('Recommendation model trained successfully');
+  } catch (err) {
+    console.error('Recommendation training failed:', err.message);
+  }
+};
 
 exports.TrainPredictModel = async function (req, res) {
-
-  const python = await spawn('python', [path.join(__dirname, '..', 'Model', 'predictionTrainingModel.py')]);
-
-  python.stdout.on('data', (data) => {
-    // console.log(data.toString('utf8'))
-  })
-  python.stderr.on('data', (data) => {
-    // console.log(data.toString('utf8'))
-  })
-}
+  try {
+    await runPythonScript(
+      path.join(__dirname, '..', 'Model', 'predictionTrainingModel.py')
+    );
+    res.json({ message: 'Prediction model trained successfully' });
+  } catch (err) {
+    console.error('Prediction training failed:', err.message);
+    res.status(500).json({ error: 'Model training failed', details: err.message });
+  }
+};
