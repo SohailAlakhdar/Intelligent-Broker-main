@@ -11,7 +11,7 @@ const fs = require("fs");
 const cloudinary = require("cloudinary").v2;
 // const objectId = require('mongodb').ObjectID;
 const emailNotification = require("./notification");
-const { Types } = require("mongoose");
+const { Types, default: mongoose } = require("mongoose");
 const { validateFiles } = require("../middlewares/validation.middleware.js");
 const { extractPublicId } = require("../utils/cloudinary.utils.js");
 
@@ -574,7 +574,7 @@ exports.scheduleAndUpdateVisit = async function (req, res) {
       },
     );
     // Send email notification
-    emailNotification.scheduleVisitNotification(visit, estate, user);
+    emailNotification.scheduleVisitNotification(visitDoc._id);
 
     res.status(200).json({ message: "Done", visit: visitDoc });
   } catch (err) {
@@ -669,6 +669,7 @@ exports.getVisitsDates = async function (req, res) {
 //     res.status(500).json({ error: err.message });
 //   }
 // };
+
 /*---------------------------- Sprint 4 ----------------------*/
 
 exports.approveAuction = async function (req, res) {
@@ -711,12 +712,11 @@ exports.placeBid = async function (req, res) {
   try {
     console.log("Bid0");
     const auctionEndStatus = await auctionEnd(req.body.estateId);
-
-    if (auctionEndStatus.status || auctionEndStatus.auctionOwner === req.user.id) {
+    const isOwner = auctionEndStatus.auctionOwner.toString() === req.user.id.toString();
+    if (auctionEndStatus.status || isOwner) {
       return res.status(400).send(JSON.stringify("Can't place bid on an ended auction"));
     }
     console.log("Bid1");
-
     const newBid = new bid.bidModel(req.body);
     newBid.userId = req.user.id;
     await newBid.save();
