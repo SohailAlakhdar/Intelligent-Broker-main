@@ -3,8 +3,7 @@ const { spawn } = require("child_process");
 const path = require('path')
 const estate = require("../Model/estateModel");
 const pythonPath = path.join(__dirname, '..', '.venv', 'Scripts', 'python.exe');
-const { promisify } = require('util');
-const { spawn } = require('child_process');
+// const { promisify } = require('util');
 
 // Returns 1 if ANY keyword from pattern is found in target, 0 otherwise
 function containsKeyword(target, keywords) {
@@ -100,7 +99,7 @@ exports.predictEstate = function (req, res) {
   let formData;
 
   try {
-    formData = preprocess_request(req);
+    formData = preprocessRequest(req);
   } catch (err) {
     return res.status(400).json({ error: "Invalid request data" });
   }

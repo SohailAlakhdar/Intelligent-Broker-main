@@ -205,7 +205,7 @@ export function placeBid(data) {
     body: JSON.stringify(data),
   };
   Waiting.Waiting(true);
-  return callServer(url + "placaBid", requestOptions);
+  return callServer(url + "placeBid", requestOptions);
 }
 
 export function auctionOperations(data) {
