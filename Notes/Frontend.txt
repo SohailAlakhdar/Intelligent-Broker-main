@@ -1,1 +1,14 @@
 import Swal from "sweetalert2";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  PieChart,
+  Pie,
+  Sector,
+  ResponsiveContainer
+} from "recharts";

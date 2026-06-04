@@ -710,13 +710,10 @@ exports.approveAuction = async function (req, res) {
 
 exports.placeBid = async function (req, res) {
   try {
-    console.log("Bid0");
     const auctionEndStatus = await auctionEnd(req.body.estateId);
-    const isOwner = auctionEndStatus.auctionOwner.toString() === req.user.id.toString();
-    if (auctionEndStatus.status || isOwner) {
+    if (auctionEndStatus.status || auctionEndStatus.auctionOwner === req.user.id) {
       return res.status(400).send(JSON.stringify("Can't place bid on an ended auction"));
     }
-    console.log("Bid1");
     const newBid = new bid.bidModel(req.body);
     newBid.userId = req.user.id;
     await newBid.save();
@@ -724,10 +721,7 @@ exports.placeBid = async function (req, res) {
       { _id: req.body.estateId },
       { price: req.body.price }
     ).exec();
-    console.log("Bid2");
-
     emailNotification.placeBidNotification(req.body.estateId); // fire-and-forget is fine
-
     return res.status(200).send(JSON.stringify("Ok"));
 
   } catch (error) {
