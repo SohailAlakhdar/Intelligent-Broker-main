@@ -57,6 +57,14 @@ function Footer(){
                                 <FooterLink to='/#'>Linkedin</FooterLink>
                         </FooterLinkItems>
                     </FooterLinksWrapper>
+                       <FooterLinksWrapper>
+                        <FooterLinkItems>
+                            <FooterLinkTitle>Modern Academy Team</FooterLinkTitle>
+                                <FooterLink to='/#'>Belal Alakhdar</FooterLink>
+                                <FooterLink to='/#'>Yassin Taha</FooterLink>
+                                <FooterLink to='/#'>Yahya Hussein</FooterLink>
+                        </FooterLinkItems>
+                    </FooterLinksWrapper>
                 </FooterLinksContainer>
                 <SocialMedia>
                     <SocialMediaWrap>

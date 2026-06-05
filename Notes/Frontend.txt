@@ -1,4 +1,5 @@
 import Swal from "sweetalert2";
+
 import {
   BarChart,
   Bar,
@@ -12,3 +13,30 @@ import {
   Sector,
   ResponsiveContainer
 } from "recharts";
+
+import { Button, TextField, Card } from '@mui/material';
+
+import styled from 'styled-components'
+
+import 'animate.css';
+
+import { HashLink } from 'react-router-hash-link';
+
+import { animateScroll as scroll } from 'react-scroll'
+
+import {
+    FooterContainer,
+    FooterWrap,
+    FooterLinksContainer,
+    FooterLinksWrapper,
+    FooterLinkItems,
+    FooterLinkTitle,
+    FooterLink,
+    SocialMedia,
+    SocialMediaWrap,
+    SocialLogo,
+    WebsiteRights,
+    SocialIcons,
+    SocialIconLink
+} from './Styles/footerElementsStyle'
+
