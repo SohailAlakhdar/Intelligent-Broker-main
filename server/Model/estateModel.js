@@ -33,22 +33,11 @@ const estateSchema = new Schema({
   pic: { type: [{ path: String, name: String }], required: true },
   auctionData: {
     endDate: { type: Date },
-    duration: { type: Number, min: 1, max: 52, default: 4 },
+    duration: { type: Number, min: 1, max: 52 },
   },
 }, { timestamps: true });
 
-estateSchema.pre('save', async function (next) {
-  if (this.isNew) {
-    const typeDoc = await mongoose.model('estateType').findById(this.type);
-    if (typeDoc?.name === 'Auction') {
-      const duration = this.auctionData?.duration ?? 4; // ← fallback in case default didn't apply
-      this.auctionData.endDate = new Date(
-        Date.now() + duration * 7 * 24 * 60 * 60 * 1000
-      );
-    }
-  }
-  next();
-});
+
 estateSchema.pre('findOneAndUpdate', function (next) {
   this.update({}, { $inc: { __v: 1 } });
   next();

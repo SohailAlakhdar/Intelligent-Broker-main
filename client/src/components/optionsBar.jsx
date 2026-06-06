@@ -97,8 +97,8 @@ function OptionsBar(props) {
 
               {adminAuth && (
                 <ListItem onClick={toggleDrawer(false)} button>
-                  <OptionsBarLinks to="/estatesDashBoard#EstatesRequests">
-                  {/* <OptionsBarLinks to="/estates#EstatesRequests"> */}
+                  {/* <OptionsBarLinks to="/estatesDashBoard#EstatesRequests"> */}
+                  <OptionsBarLinks to="/adminDashBoard">
                     <Badge
                       badgeContent={
                         context.estateRequests === "error" ||
