@@ -5,7 +5,7 @@ const style = {
   height:"30rem",
   margin: "3.5rem",
 }
-
+ 
 function MyMap(props){
   const handleChange = (event) => {
     event.target = {name : "addressOnMap" ,value :event.latLng};

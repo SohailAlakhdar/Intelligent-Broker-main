@@ -165,98 +165,6 @@ exports.addEstate = async function (req, res) {
 };
 
 
-
-// exports.updateEstate = async function (req, res) {
-//   try {
-//     const estateDoc = await estate.estateModel.findById(req.body.estateId);
-//     if (!estateDoc) {
-//       return res.status(404).json({ error: "Estate not found" });
-//     }
-//     const updatedEstate = await estate.estateModel.findByIdAndUpdate(
-//       req.body.estateId,
-//       { ...req.body },
-//       { new: true, runValidators: true },
-//     );
-//     if (!updatedEstate) {
-//       return res.status(404).json({ message: "Estate not found" });
-//     }
-//     res.status(200).json({ message: "Done", estate: updatedEstate });
-//   } catch (error) {
-//     res.status(500).json(error);
-//   }
-// };
-
-// exports.updateEstateImage = async function (req, res) {
-//   try {
-//     const estateDoc = await estate.estateModel
-//       .findOne({
-//         _id: req.body.estateId,
-//         sellerId: req.user.id,
-//         status: { $ne: "pending" },
-//       })
-//       .select("pic contract");
-
-//     if (!estateDoc) {
-//       return res.status(404).json({ message: "Estate not found" });
-//     }
-//     let deletedPics = [];
-//     // ---------------- PICTURES HANDLING ----------------
-//     if (req.body.deletedPicNames) {
-//       deletedPics = Array.isArray(req.body.deletedPicNames)
-//         ? req.body.deletedPicNames
-//         : [req.body.deletedPicNames];
-
-//       // Validate pics belong to this estate
-//       const estateDocPicNames = estateDoc.pic.map((pic) => pic.name);
-//       const invalidPics = deletedPics.filter(
-//         (name) => !estateDocPicNames.includes(name)
-//       );
-//       if (invalidPics.length > 0) {
-//         return res.status(400).json({
-//           message: "Some pictures do not belong to this estate",
-//           invalidPics,
-//         });
-//       }
-//       // Check total pics won't exceed 10
-//       const remainingPics = estateDoc.pic.length - deletedPics.length;
-//       const newPics = req.files?.pic?.length || 0;
-//       if (remainingPics + newPics > 10) {
-//         return res.status(400).json({
-//           message: `Cannot exceed 10 images. You have ${remainingPics} remaining and are adding ${newPics}`,
-//         });
-//       }
-//       // Delete from cloudinary
-//       await picDeleteOperation(deletedPics);
-
-//       // Remove from DB array
-//       estateDoc.pic = estateDoc.pic.filter(
-//         (pic) => !deletedPics.includes(pic.name)
-//       );
-//     }
-//     // ---------------- CONTRACT HANDLING ----------------
-//     if (req.files?.contract && estateDoc.contract?.name) {
-//       await picDeleteOperation([estateDoc.contract.name]);
-//     }
-
-//     // ---------------- ADD NEW FILES ----------------
-//     try {
-//       await picAddOperation(req.files, estateDoc);
-//     } catch (uploadError) {
-//       console.error("Upload failed after deletion:", uploadError);
-//       return res.status(500).json({ message: "Failed to upload new images" });
-//     }
-//     await estateDoc.save();
-//     res.status(200).json({
-//       message: "Done",
-//       data: estateDoc,
-//     });
-//   } catch (error) {
-//     console.error("updateEstateImage error:", error);
-//     res.status(500).json({ message: "Internal server error" });
-//   }
-// };
-
-
 exports.updateEstate = async function (req, res) {
   console.log("Update0");
 
@@ -319,15 +227,9 @@ exports.updateEstate = async function (req, res) {
 
 exports.approveEstate = async function (req, res) {
   try {
-    const { _id, status } = req.body;
-
-    if (!_id || !status) {
-      return res.status(400).json({ message: "Missing required fields: _id or status" });
-    }
-
     const updatedEstate = await estate.estateModel.findOneAndUpdate(
-      { _id },
-      { status },
+      { _id: req.body._id },
+      { status: req.body.status },
       { new: true }
     ).populate('sellerId', 'email');
 
@@ -635,40 +537,6 @@ exports.getVisitsDates = async function (req, res) {
     return res.status(500).json({ error: err.message });
   }
 };
-// exports.getVisitsDates = async function (req, res) {
-//   try {
-//     const { estateId, sellerId, visitorId } = req.query; // use query params, not raw JSON
-
-
-//     // Build a safe, whitelisted filter
-//     const filter = {};
-//     if (estateId) filter.estateId = estateId;
-//     if (visitorId) filter.visitorId = visitorId;
-
-//     const results = await visit.visitModel
-//       .find(filter)
-//       .populate("estateId")
-//       .populate("visitorId", "name email phoneNumber");
-
-//     if (sellerId) {
-//       // Filter by sellerId at DB level would require a different schema/query,
-//       // so we filter here but only after fetching the user's own estates
-//       const data = { approved: [], rejected: [], pending: [] };
-
-//       results.forEach(item => {
-//         if (item.estateId?.sellerId?.toString() !== sellerId) return;
-//         if (item.status === "approved") data.approved.push(item);
-//         else if (item.status === "rejected") data.rejected.push(item);
-//         else if (item.status === "pending") data.pending.push(item);
-//       });
-//       return res.status(200).json(data);
-//     }
-//     res.status(200).json(results);
-//   } catch (err) {
-//     console.error("getVisitsDates error:", err);
-//     res.status(500).json({ error: err.message });
-//   }
-// };
 
 /*---------------------------- Sprint 4 ----------------------*/
 
@@ -678,9 +546,9 @@ exports.approveAuction = async function (req, res) {
 
     const estateData = await estate.estateModel.findById(estateId);
     if (!estateData) return res.status(404).json({ error: "Estate not found" });
-    if (!estateData.auctionData.duration) {
-      return res.status(400).json({ message: "Auction duration not set" });
-    }
+    // if (!estateData.auctionData.duration) {
+    //   return res.status(400).json({ message: "Auction duration not set" });
+    // }
     // Calculate auction end date
     const auctionEndDate = new Date();
     auctionEndDate.setDate(
@@ -695,7 +563,7 @@ exports.approveAuction = async function (req, res) {
     await estate.estateModel.updateOne({ _id: estateId }, update);
 
     emailNotification
-      .estateNotification({ ...estateData.toObject(), status })
+      .estateNotification({ ...estateData.toObject(), status: req.body.status })
       .catch(err => console.error("estateNotification error:", err));
 
     return res.status(200).json({

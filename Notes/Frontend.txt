@@ -40,3 +40,5 @@ import {
     SocialIconLink
 } from './Styles/footerElementsStyle'
 
+import { Map, Marker } from "pigeon-maps";
+
