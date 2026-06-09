@@ -15,43 +15,68 @@ const { Types, default: mongoose } = require("mongoose");
 const { validateFiles } = require("../middlewares/validation.middleware.js");
 const { extractPublicId } = require("../utils/cloudinary.utils.js");
 
+// function picAddOperation(files, estate) {
+//   if (!files) return;
+
+//   if (files.contract) {
+//     estate.contract = {
+//       path: files.contract[0].path,
+//       name: files.contract[0].filename,
+//     };
+//   }
+
+//   if (files.pic) {
+//     if (!Array.isArray(estate.pic)) estate.pic = [];
+//     estate.pic.push(
+//       ...files.pic.map((file) => ({ path: file.path, name: file.filename }))
+//     );
+//   }
+// }
+
+// async function picDeleteOperation(picsToDelete) {
+//   if (!picsToDelete?.length) return;
+
+//   const validIds = picsToDelete.filter(
+//     (id) => typeof id === "string" && id.trim().length > 0
+//   );
+//   if (!validIds.length) return;
+
+//   const results = await Promise.all(
+//     validIds.map((name) => cloudinary.uploader.destroy(name))
+//   );
+
+//   results.forEach((result, i) => {
+//     if (result.result !== "ok" && result.result !== "not found") {
+//       throw new Error(`Failed to delete: ${validIds[i]}`);
+//     }
+//   });
+// }
 function picAddOperation(files, estate) {
-  if (!files) return;
-
   if (files.contract) {
-    estate.contract = {
-      path: files.contract[0].path,
-      name: files.contract[0].filename,
-    };
+    estate.contract = {};
+    estate.contract.path = files.contract[0].path;
+    estate.contract.name = files.contract[0].filename;
   }
-
   if (files.pic) {
-    if (!Array.isArray(estate.pic)) estate.pic = [];
-    estate.pic.push(
-      ...files.pic.map((file) => ({ path: file.path, name: file.filename }))
-    );
+    files.pic.forEach((e) => {
+      estate.pic.push({
+        path: e.path,
+        name: e.filename
+      });
+    })
   }
 }
 
-async function picDeleteOperation(picsToDelete) {
-  if (!picsToDelete?.length) return;
-
-  const validIds = picsToDelete.filter(
-    (id) => typeof id === "string" && id.trim().length > 0
-  );
-  if (!validIds.length) return;
-
-  const results = await Promise.all(
-    validIds.map((name) => cloudinary.uploader.destroy(name))
-  );
-
-  results.forEach((result, i) => {
-    if (result.result !== "ok" && result.result !== "not found") {
-      throw new Error(`Failed to delete: ${validIds[i]}`);
+function picDeleteOperation(picPath) {
+  picPath.forEach((e) => {
+    try {
+      cloudinary.uploader.destroy(e.name);
+    } catch (err) {
+      console.error(err)
+      return (err);
     }
-  });
+  })
 }
-
 async function CheckTypeAndCategoryExists(params) {
   if (params.type && !await type.estateTypeModel.findById(params.type)) {
     return { error: "Estate type not found" };
@@ -166,7 +191,6 @@ exports.addEstate = async function (req, res) {
 
 
 exports.updateEstate = async function (req, res) {
-  console.log("Update0");
 
   if (req.file_error) {
     return res.status(400).send(JSON.stringify(req.file_error));
@@ -175,48 +199,40 @@ exports.updateEstate = async function (req, res) {
   try {
     const data = await estate.estateModel.findById({ _id: req.body.estateId });
     if (!data) return res.status(404).send(JSON.stringify("Estate not found"));
-
+    console.log({ data });
     if (req.body.deletedPicNames || (req.files && req.files.contract)) {
-      const picDeleteNames = req.body.deletedPicNames
-        ? req.body.deletedPicNames.split(",")
-        : [];
+      req.body.deletedPicNames = req.body.deletedPicNames.split(",");
 
-      // Normalize to public_ids once, reuse everywhere
-      const normalizedDeleteIds = picDeleteNames
-        .map(extractPublicId)
-        .filter(Boolean);
-
-      // Filter out deleted pics from existing list
-      req.body.pic = data.pic.filter(
-        (e) => !normalizedDeleteIds.includes(extractPublicId(e.path))
-      );
-      console.log("Update1");
+      req.body.pic = data.pic.filter(e => !req.body.deletedPicNames.includes(e.path));
 
       picAddOperation(req.files, req.body);
 
-      // If a new contract was uploaded, queue the old one for deletion
-      if (req.files && req.files.contract) {
-        if (data.contract && data.contract.path) {
-          const oldContractId = extractPublicId(data.contract.path);
-          if (oldContractId) normalizedDeleteIds.push(oldContractId);
-        }
+      if (req.body.contract) {
+        req.body.deletedPicNames.push(data.contract.path);
       } else {
-        // No new contract uploaded — keep the existing one
         req.body.contract = data.contract;
       }
 
-      console.log("Update2");
-      await picDeleteOperation(normalizedDeleteIds.filter((e) => e.length > 1));
+      req.body.deletedPicNames.forEach((filePath) => {
+        if (filePath && filePath.length > 1) {
+          try {
+            fs.unlinkSync(filePath);
+          } catch (err) {
+            console.error(`Failed to delete file: ${filePath}`, err);
+          }
+        }
+      });
     }
 
-    console.log("Update3");
-    if (!req.body.status) req.body.status = "pending";
+    if (!req.body.status) {
+      req.body.status = "pending";
+    }
 
-    await estate.estateModel.updateOne(
+    let updatedDatat = await estate.estateModel.updateOne(
       { _id: req.body.estateId },
       { $set: req.body }
     );
-
+    console.log({ updatedDatat });
     res.status(200).send(JSON.stringify("Ok"));
 
   } catch (err) {
