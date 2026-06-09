@@ -18,24 +18,17 @@ exports.upload = multer({
     fileSize: 5 * 1024 * 1024, // 5MB
   },
   fileFilter: (req, file, cb) => {
-    const allowed = ['image/png', 'image/jpeg', 'image/webp'];
-    if (file.fieldname === 'contract') {
-      if (file.mimetype === 'application/pdf' || allowed.includes(file.mimetype)) {
-        cb(null, true);
-      } else {
-        req.file_error = { message: "Contract must be a PDF" };
-        cb(null, false);
-      }
-    } else if (file.fieldname === 'pic') {
-      if (allowed.includes(file.mimetype)) {
-        cb(null, true);
-      } else {
-        req.file_error = { message: "Pictures must be PNG, JPEG, or WEBP" };
-        cb(null, false);
-      }
+    const allowedTypes = [
+      "image/png",
+      "image/jpg",
+      "image/jpeg",
+      "application/pdf"  // ✅ allow contract PDFs
+    ];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
     } else {
-      req.file_error = { message: "Unexpected field" };
-      cb(null, false);
+      req.file_error = "Only .png, .jpg, .jpeg and .pdf formats allowed!";
+      return cb(null, false);
     }
   }
 });

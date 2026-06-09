@@ -51,11 +51,12 @@ const { extractPublicId } = require("../utils/cloudinary.utils.js");
 //     }
 //   });
 // }
-function picAddOperation(files, estate) {
+async function picAddOperation(files, estate) {
   if (files.contract) {
-    estate.contract = {};
-    estate.contract.path = files.contract[0].path;
-    estate.contract.name = files.contract[0].filename;
+    estate.contract = {
+      path: files.contract[0].path,
+      name: files.contract[0].filename
+    };
   }
   if (files.pic) {
     files.pic.forEach((e) => {
@@ -63,20 +64,22 @@ function picAddOperation(files, estate) {
         path: e.path,
         name: e.filename
       });
-    })
+    });
   }
 }
 
-function picDeleteOperation(picPath) {
-  picPath.forEach((e) => {
-    try {
-      cloudinary.uploader.destroy(e.name);
-    } catch (err) {
-      console.error(err)
-      return (err);
-    }
-  })
+async function picDeleteOperation(picPath) {
+  await Promise.all(
+    picPath.map(async (e) => {
+      try {
+        await cloudinary.uploader.destroy(e.name);
+      } catch (err) {
+        console.error(err);
+      }
+    })
+  );
 }
+
 async function CheckTypeAndCategoryExists(params) {
   if (params.type && !await type.estateTypeModel.findById(params.type)) {
     return { error: "Estate type not found" };
@@ -197,40 +200,44 @@ exports.updateEstate = async function (req, res) {
   }
 
   try {
+    console.log("Update1");
     const data = await estate.estateModel.findById({ _id: req.body.estateId });
     if (!data) return res.status(404).send(JSON.stringify("Estate not found"));
-    console.log({ data });
+
     if (req.body.deletedPicNames || (req.files && req.files.contract)) {
-      req.body.deletedPicNames = req.body.deletedPicNames.split(",");
+      req.body.deletedPicNames = req.body.deletedPicNames ? req.body.deletedPicNames.split(",") : [];
+
+      // get the full pic objects (with name) of deleted pics
+      const picsToDelete = data.pic.filter(e =>
+        req.body.deletedPicNames.includes(e.path)
+      );
 
       req.body.pic = data.pic.filter(e => !req.body.deletedPicNames.includes(e.path));
+      console.log({ PIC: req.body.pic });
+
+      console.log("Update2");
 
       picAddOperation(req.files, req.body);
 
       if (req.body.contract) {
-        req.body.deletedPicNames.push(data.contract.path);
+        picsToDelete.push(data.contract); // ✅ add old contract to Cloudinary delete list
       } else {
         req.body.contract = data.contract;
       }
+      await picDeleteOperation(picsToDelete);
+      console.log("Update3");
 
-      req.body.deletedPicNames.forEach((filePath) => {
-        if (filePath && filePath.length > 1) {
-          try {
-            fs.unlinkSync(filePath);
-          } catch (err) {
-            console.error(`Failed to delete file: ${filePath}`, err);
-          }
-        }
-      });
+
     }
-
     if (!req.body.status) {
       req.body.status = "pending";
     }
-
-    let updatedDatat = await estate.estateModel.updateOne(
+    console.log({ updatedBody: req.body });
+    ({ updatedDataBodey: req.body });
+    let updatedDatat = await estate.estateModel.findOneAndUpdate(
       { _id: req.body.estateId },
-      { $set: req.body }
+      { $set: req.body },
+      { new: true }
     );
     console.log({ updatedDatat });
     res.status(200).send(JSON.stringify("Ok"));
