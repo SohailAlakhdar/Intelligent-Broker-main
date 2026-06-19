@@ -81,20 +81,6 @@ function runPythonScript(scriptPath, args = []) {
 }
 
 
-// exports.predictEstate = async function (req, res) {
-
-//   const formData = preprocess_request(req);
-//   const python = await spawn(pythonPath, [path.join(__dirname, '..', 'Model', 'predictionModel.py'), formData]);
-//   // const python = spawn('python', [path.join(__dirname, '..', 'Model', 'predictionModel.py'), formData.join(",")]);
-//   python.stdout.on('data', (data) => {
-//     console.log(data.toString('utf8'));
-//     const price = Number(data.toString('utf8')).toFixed(0);
-//     res.send({ result: price })
-//   })
-//   python.stderr.on('data', (data) => {
-//     console.log(data.toString('utf8'));
-//   })
-// }
 exports.predictEstate = function (req, res) {
   let formData;
 
@@ -189,7 +175,6 @@ exports.getRecommendedEstate = async function (req, res) {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
-
 
 exports.recommendationTrainingModel = async function () {
   try {
