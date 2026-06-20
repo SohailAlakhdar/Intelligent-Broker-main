@@ -3,12 +3,12 @@ const { spawn } = require("child_process");
 const path = require('path')
 const estate = require("../Model/estateModel");
 const pythonPath = path.join(__dirname, '..', '.venv', 'Scripts', 'python.exe');
-// const { promisify } = require('util');
 
 // Returns 1 if ANY keyword from pattern is found in target, 0 otherwise
 function containsKeyword(target, keywords) {
   return keywords.some(word => target.includes(word)) ? 1 : 0;
 }
+
 const FEATURE_KEYWORDS = {
   pool: ["pool", "مسبح", "سباحة", "سباحه"],
   garden: ["garden", "حديقة", "حديقه", "جنينة", "جنينه"],
