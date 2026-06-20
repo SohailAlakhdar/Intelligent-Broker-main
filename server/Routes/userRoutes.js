@@ -6,7 +6,7 @@ const { addUserSchema } = require("../middlewares/user.validation.js");
 const router = express.Router();
 
 /*----------Sprint 5----------*/
-router.post("/addUser", validation(addUserSchema), function (req, res) {
+router.post("/addUser", function (req, res) {
   userController.addUser(req, res);
 })
 

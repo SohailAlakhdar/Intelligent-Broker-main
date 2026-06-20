@@ -16,14 +16,16 @@ exports.addUser = async function (req, res) {
     if (checkEmail) {
       return res.status(409).json({ message: "Email already exists" });
     }
+    console.log({ Req: req.body });
 
     req.body.password = await bcrypt.hash(req.body.password, 10);
     const newUser = new user.userModel({
-      userName: req.body.userName,
+      name: req.body.name,
       email: req.body.email,
       password: req.body.password,
-      phone: req.body.phone,
+      phoneNumber: req.body.phoneNumber,
     });
+    console.log({ newUser });
     const savedUser = await newUser.save();
     createToken(savedUser, res);
   } catch (error) {

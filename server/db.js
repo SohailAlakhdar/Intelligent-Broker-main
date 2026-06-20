@@ -27,7 +27,7 @@ async function initDb() {
 
   const categoryCount = await category.categoryModel.countDocuments();
   const typeCount = await type.estateTypeModel.countDocuments();
-  const userCount = await user.userModel.countDocuments();
+  // const userCount = await user.userModel.countDocuments();
 
   if (categoryCount === 0) {
     await category.categoryModel.insertMany([
@@ -46,16 +46,5 @@ async function initDb() {
     console.log("types inserted");
   }
 
-  if (userCount === 0) {
-    const hashedPassword = await bcrypt.hash("Admin@user123", 10); // ← hash the password
-    await user.userModel.create({
-      name: "AdminUser",
-      password: hashedPassword,
-      email: "admin@user.com",
-      phoneNumber: "00121414252",
-      admin: "true", // ← set as admin
-    });
-    console.log("Admin user inserted ✅");
-  }
 }
 // await estateModel.insertMany([]);
