@@ -9,7 +9,6 @@ const bid = require("../Model/bidEstateModel");
 const user = require("../Model/userModel");
 const fs = require("fs");
 const cloudinary = require("cloudinary").v2;
-// const objectId = require('mongodb').ObjectID;
 const emailNotification = require("./notification");
 const { Types, default: mongoose } = require("mongoose");
 const { validateFiles } = require("../middlewares/validation.middleware.js");

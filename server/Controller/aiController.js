@@ -132,7 +132,6 @@ exports.predictEstate = function (req, res) {
   });
 };
 
-
 exports.getRecommendedEstate = async function (req, res) {
   try {
     const python = spawn(pythonPath, [
