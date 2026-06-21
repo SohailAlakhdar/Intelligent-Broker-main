@@ -1,9 +1,0 @@
-/node_modules
-server/Dockerfile
-server/docker-compose*
-/src/config
-node_modules
-.git
-.env
-npm-debug.log
-server/docker-compose.yml

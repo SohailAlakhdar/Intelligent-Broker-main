@@ -80,7 +80,6 @@ function runPythonScript(scriptPath, args = []) {
   });
 }
 
-
 exports.predictEstate = function (req, res) {
   let formData;
 
