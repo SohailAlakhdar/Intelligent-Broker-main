@@ -16,7 +16,6 @@ exports.addUser = async function (req, res) {
     if (checkEmail) {
       return res.status(409).json({ message: "Email already exists" });
     }
-    console.log({ Req: req.body });
 
     req.body.password = await bcrypt.hash(req.body.password, 10);
     const newUser = new user.userModel({
@@ -25,7 +24,6 @@ exports.addUser = async function (req, res) {
       password: req.body.password,
       phoneNumber: req.body.phoneNumber,
     });
-    console.log({ newUser });
     const savedUser = await newUser.save();
     createToken(savedUser, res);
   } catch (error) {

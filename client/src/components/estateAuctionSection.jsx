@@ -30,7 +30,7 @@ function EstateAuctionSection(props) {
 
   return (
     <>
-      {console.log(auction)}
+      {/* {console.log(auction)} */}
       {auction.auctionResult ? (
         <EndAuction data={auction.auctionResult} estateId={props.data._id} />
       ) : (

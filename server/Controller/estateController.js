@@ -178,7 +178,7 @@ exports.addEstate = async function (req, res) {
     // add estate to DB
     newEstate = new estate.estateModel(req.body);
     newEstate.sellerId = req.user.id;
-    console.log("Add");
+    // console.log("Add");
     await picAddOperation(req.files, newEstate);
     await newEstate.save();
     res.status(200).json({ message: "Done", estate: newEstate });
@@ -199,7 +199,7 @@ exports.updateEstate = async function (req, res) {
   }
 
   try {
-    console.log("Update1");
+    // console.log("Update1");
     const data = await estate.estateModel.findById({ _id: req.body.estateId });
     if (!data) return res.status(404).send(JSON.stringify("Estate not found"));
 
@@ -212,9 +212,9 @@ exports.updateEstate = async function (req, res) {
       );
 
       req.body.pic = data.pic.filter(e => !req.body.deletedPicNames.includes(e.path));
-      console.log({ PIC: req.body.pic });
+      // console.log({ PIC: req.body.pic });
 
-      console.log("Update2");
+      // console.log("Update2");
 
       picAddOperation(req.files, req.body);
 
@@ -224,21 +224,21 @@ exports.updateEstate = async function (req, res) {
         req.body.contract = data.contract;
       }
       await picDeleteOperation(picsToDelete);
-      console.log("Update3");
+      // console.log("Update3");
 
 
     }
     if (!req.body.status) {
       req.body.status = "pending";
     }
-    console.log({ updatedBody: req.body });
+    // console.log({ updatedBody: req.body });
     ({ updatedDataBodey: req.body });
     let updatedDatat = await estate.estateModel.findOneAndUpdate(
       { _id: req.body.estateId },
       { $set: req.body },
       { new: true }
     );
-    console.log({ updatedDatat });
+    // console.log({ updatedDatat });
     res.status(200).send(JSON.stringify("Ok"));
 
   } catch (err) {
