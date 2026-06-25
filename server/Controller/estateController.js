@@ -164,15 +164,7 @@ exports.findEstate = async function (req, res) {
 };
 
 exports.addEstate = async function (req, res) {
-  // Validate file types
-  // const fileErrors = validateFiles(req.files);
-  // if (fileErrors.length > 0) {
-  //   return res.status(400).json({ errors: fileErrors });
-  // }
-  // const checkError = await CheckTypeAndCategoryExists(req.body);
-  // if (checkError?.error) {
-  //   return res.status(404).json({ error: checkError.error });
-  // }
+
   let newEstate;
   try {
     // add estate to DB

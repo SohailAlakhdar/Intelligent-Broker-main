@@ -18,6 +18,7 @@ app.use("/uploads", express.static("uploads"));
 
 app.use("/", require(path.join(__dirname + "/Routes/estateRoutes")));
 app.use("/user", require(path.join(__dirname + "/Routes/userRoutes")));
+app.use("/chat", require(path.join(__dirname + "/Routes/chatRoutes")));
 app.use("/ai", require(path.join(__dirname + "/Routes/aiRoutes")));
 app.use("/*dummy", (req, res) => {
   res.status(404).json({ message: "Not Found this URL" });
