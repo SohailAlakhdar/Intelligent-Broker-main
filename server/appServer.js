@@ -11,14 +11,20 @@ const cloudinary = require("cloudinary").v2;
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors());
+app.use(cors({
+  origin: "https://your-client-name.onrender.com",
+  credentials: true
+}));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use("/uploads", express.static("uploads"));
+app.use("/test", (req, res) => {
+  res.status(200).json({ message: "Server is running" });
+});
 
 app.use("/", require(path.join(__dirname + "/Routes/estateRoutes")));
 app.use("/user", require(path.join(__dirname + "/Routes/userRoutes")));
-app.use("/chat", require(path.join(__dirname + "/Routes/chatRoutes")));
+// app.use("/chat", require(path.join(__dirname + "/Routes/chatRoutes")));
 app.use("/ai", require(path.join(__dirname + "/Routes/aiRoutes")));
 app.use("/*dummy", (req, res) => {
   res.status(404).json({ message: "Not Found this URL" });

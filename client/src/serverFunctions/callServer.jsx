@@ -1,7 +1,7 @@
 import * as Waiting from "../components/waiting.jsx";
 
-// const url = "https://homeexplorerapi.herokuapp.com/";
-const url = "http://localhost:3000/";
+const url = "https://intelligent-broker-main-1.onrender.com/";
+// const url = "http://localhost:3000/";
 
 const callServer = (url, requestOptions, noDataReply) => {
   return fetch(url, requestOptions)

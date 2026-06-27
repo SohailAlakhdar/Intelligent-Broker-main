@@ -98,9 +98,9 @@ const Navbar = ({ toggle, setAuth, auth }) => {
                             Prediction
                         </NavLinks>
                     </NavItem>
-                    <NavItem>
+                    {/* <NavItem>
                         <NavLinks to="/chatbot">ChatBot</NavLinks>
-                    </NavItem>
+                    </NavItem> */}
                     {!auth && (
                         <NavItem>
                             <NavLinks

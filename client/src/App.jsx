@@ -12,7 +12,7 @@ import AdminDashBoard from "./pages/adminDashBoard.jsx";
 import AuthPage from "./pages/authPage.jsx";
 import NotFound404Component from "./components/notFound404Component.jsx";
 import { CheckAuth } from "./components/checkData.jsx";
-import ChatBotPage from "./pages/chatBotPage.jsx";
+// import ChatBotPage from "./pages/chatBotPage.jsx";
 function App() {
   const [isOpen, setIsOpen] = useState(false);
   const [auth, setAuth] = useState(CheckAuth() ? true : false);
@@ -40,7 +40,7 @@ function App() {
             path="authPage"
             element={<AuthPage setAuth={setAuth} />}
           />
-          <Route exact path="chatBot" element={<ChatBotPage />} />
+          {/* <Route exact path="chatBot" element={<ChatBotPage />} /> */}
           <Route exact path="*" element={<NotFound404Component />} />
         </Routes>
         <Footer />
