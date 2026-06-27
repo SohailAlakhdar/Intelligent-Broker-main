@@ -14,6 +14,8 @@ async function main() {
     await mongoose.connect(process.env.DB_URI || "", {
       serverSelectionTimeoutMS: 30000,
     });
+        // await mongoose.connect(''); // Atlas DB Server
+
     console.log("Database connected 👌");
     await initDb()
 
