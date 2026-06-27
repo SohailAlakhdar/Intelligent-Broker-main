@@ -12,7 +12,8 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cors({
-  origin: "https://intelligent-broker-main.onrender.com",
+  origin: "https://intelligent-broker.onrender.com",
+  // origin: "https://intelligent-broker-main.onrender.com",
   credentials: true
 }));
 app.use(bodyParser.urlencoded({ extended: true }));
